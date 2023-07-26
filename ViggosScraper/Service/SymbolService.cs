@@ -57,4 +57,6 @@ public class SymbolService
             .Where(s => dates.Contains(s.Date))
             .ToList();
     }
+
+    public List<DatoSymbol> GetAll() => _symbols.ToList();
 }
