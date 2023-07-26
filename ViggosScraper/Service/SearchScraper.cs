@@ -6,13 +6,22 @@ namespace ViggosScraper.Service;
 
 public class SearchScraper
 {
+
+    private readonly ILogger<SearchScraper> _logger;
+
+    public SearchScraper(ILogger<SearchScraper> logger)
+    {
+        _logger = logger;
+    }
+
     public async Task<List<SearchResult>> Search(string searchQuery)
     {
         var url = $"https://www.drikdato.dk/ViggosOdense/Sogning/{searchQuery}";
+        _logger.LogInformation("Searching for {searchQuery}", searchQuery);
 
         var web = new HtmlWeb();
         var htmlDoc = await web.LoadFromWebAsync(url);
-
+        
         var nodes = htmlDoc.DocumentNode.SelectNodes(
             "/" +
             "/div[@class='floatPod']" +
@@ -21,19 +30,16 @@ public class SearchScraper
             "/tr"
         );
 
-        var results = nodes
+        var results = nodes?
             .Where(n => !n.InnerText.StartsWith("\\"))
             .Where(n => n.Attributes["onclick"] != null)
             .Select(n => new SearchResult()
             {
                 Name = n.InnerText.Trim(),
                 ProfileId = ExtractUserId(n)
-            }).ToList();
+            }).ToList() ?? new List<SearchResult>();
 
-        foreach (var res in results)
-        {
-            Console.WriteLine($"{res.Name}: {res.ProfileId}");
-        }
+        _logger.LogInformation("Found {count} results", results.Count);
 
         return results;
     }

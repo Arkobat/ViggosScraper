@@ -1,24 +1,36 @@
-﻿using HtmlAgilityPack;
+﻿using System.Net;
+using HtmlAgilityPack;
+using ViggosScraper.Middleware;
 using ViggosScraper.Model;
 
 namespace ViggosScraper.Service;
 
 public class UserScraper
 {
+    private ILogger<UserScraper> _logger;
     private readonly SymbolService _symbolService;
 
-    public UserScraper(SymbolService symbolService)
+    public UserScraper(ILogger<UserScraper> logger, SymbolService symbolService)
     {
+        _logger = logger;
         _symbolService = symbolService;
     }
 
     public async Task<User> GetUser(string userId)
     {
+        _logger.LogInformation("Getting user {userId}", userId);
+        
         var url = $"https://www.drikdato.dk/ViggosOdense/Profil/{userId}";
 
         var web = new HtmlWeb();
         var htmlDoc = await web.LoadFromWebAsync(url);
 
+        if (htmlDoc.DocumentNode.InnerText.Contains("Profilen blev ikke fundet..."))
+        {
+            _logger.LogInformation("User {userId} not found", userId);
+            throw new HttpException(HttpStatusCode.NotFound, $"Could not find any user with that id {userId}");
+        }
+        
         var userInfo = htmlDoc.DocumentNode.SelectNodes(
                 "/" +
                 "/div[@class='floatPod']" +
@@ -63,6 +75,9 @@ public class UserScraper
             "/table" +
             "/tr"
         );
+
+        if (nodes == null)
+            return new List<Dato>();
 
         var dates = nodes
             .Where(n => n.InnerText != "Nr.Dato")

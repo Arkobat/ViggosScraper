@@ -7,15 +7,24 @@ namespace ViggosScraper.Service;
 public class HighscoreScraper
 {
 
+    private readonly ILogger<HighscoreScraper> _logger;
+
+    public HighscoreScraper(ILogger<HighscoreScraper> logger)
+    {
+        _logger = logger;
+    }
+
     public async Task<List<HighscoreEntry>> GetHighscore(int? year)
     {
         var web = new HtmlWeb();
         if (year is null)
         {
+            _logger.LogInformation("Scraping all time highscore");
             const string url = "https://www.drikdato.dk/ViggosOdense/Statistik/All";
             var htmlDoc = await web.LoadFromWebAsync(url);
             return AllTime(htmlDoc);
         }
+        _logger.LogInformation("Scraping highscore for year {Year}", year);
 
         throw new NotImplementedException();
     }
