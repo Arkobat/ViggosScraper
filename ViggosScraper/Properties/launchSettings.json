@@ -1,12 +1,4 @@
 ﻿{
-  "iisSettings": {
-    "windowsAuthentication": false,
-    "anonymousAuthentication": true,
-    "iisExpress": {
-      "applicationUrl": "http://localhost:38424",
-      "sslPort": 44397
-    }
-  },
   "profiles": {
     "http": {
       "commandName": "Project",
