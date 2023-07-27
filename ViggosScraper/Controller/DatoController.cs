@@ -63,4 +63,15 @@ public class DatoController : ControllerBase
 
         return definitions;
     }
+
+    [HttpGet("mutual/{user1}/{user2}")]
+    public async Task<List<Dato>> GetMutual(string user1, string user2)
+    {
+        var result1 = await _userScraper.GetUser(user1);
+        var result2  = await _userScraper.GetUser(user2);
+
+        return result1.Dates
+            .Where(r1 => result2.Dates.Any(r2 => r1.Date == r2.Date))
+            .ToList();
+    }
 }
