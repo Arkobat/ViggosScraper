@@ -12,7 +12,9 @@ var environment = builder.Environment;
 
 services
     .AddScoped<ExceptionMiddleware>()
+    .AddScoped<HttpClient>()
     .AddScoped<HighscoreScraper>()
+    .AddScoped<LoginService>()
     .AddScoped<SearchScraper>()
     .AddScoped<SymbolService>()
     .AddScoped<UserScraper>();
@@ -30,14 +32,8 @@ services
         converters.Add(new JsonStringEnumConverter());
     });
 
-services
-    .AddAuthentication("Basic");
-
 services.AddEndpointsApiExplorer();
-services.AddSwaggerGen(c =>
-{
-    c.SwaggerDoc("v1", new OpenApiInfo() {Title = "Viggos Scraper", Version = "v1"});
-});
+services.AddSwaggerGen(c => { c.SwaggerDoc("v1", new OpenApiInfo() {Title = "Viggos Scraper", Version = "v1"}); });
 
 using var app = builder.Build();
 
@@ -60,13 +56,7 @@ if (app.Environment.IsDevelopment())
     //app.UseDeveloperExceptionPage();
 }
 
-//app.UseHttpsRedirection();
-//app.Services.GetRequiredService<IBus>().AutoSubscribe();
-//app.Services.GetRequiredService<T>().Database.Migrate();
-
-app.UseAuthentication();
-app.UseAuthorization();
-
+app.UseHttpsRedirection();
 app.MapControllers();
 
 app.Run();
