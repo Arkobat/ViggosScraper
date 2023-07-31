@@ -7,7 +7,7 @@ namespace ViggosScraper.Service;
 
 public class UserScraper
 {
-    private ILogger<UserScraper> _logger;
+    private readonly ILogger<UserScraper> _logger;
     private readonly SymbolService _symbolService;
 
     public UserScraper(ILogger<UserScraper> logger, SymbolService symbolService)
