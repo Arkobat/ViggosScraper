@@ -35,4 +35,26 @@ public class LoginService
         
         return res;
     }
+    
+    public async Task<ViggoLoginResponse> Authenticate(string token)
+    {
+        var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var url = $"https://www.drikdato.app/_service/service.php?ts={now}";
+
+        var formContent = new FormUrlEncodedContent(new[]
+        {
+            new KeyValuePair<string, string>("action", "authorize"),
+            new KeyValuePair<string, string>("token", token),
+        });
+        var response = await _httpClient.PostAsync(url, formContent);
+
+        var json = await response.Content.ReadAsStringAsync();
+        
+        var res = JsonSerializer.Deserialize<ViggoLoginResponse>(json, new JsonSerializerOptions()
+        {
+            PropertyNameCaseInsensitive = true
+        })!;
+        
+        return res;
+    }
 }

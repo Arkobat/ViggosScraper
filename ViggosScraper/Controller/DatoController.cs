@@ -85,4 +85,12 @@ public class DatoController : ControllerBase
         if (result.Status == 0) Response.StatusCode = (int) HttpStatusCode.Unauthorized;
         return result;
     }
+    
+    [HttpPost("authenticate")]
+    public async Task<ViggoLoginResponse> Authenticate([FromBody] AuthRequest request)
+    {
+        var result = await _loginService.Authenticate(request.Token);
+        if (result.Status == 0) Response.StatusCode = (int) HttpStatusCode.Unauthorized;
+        return result;
+    }
 }
