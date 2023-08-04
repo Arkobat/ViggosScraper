@@ -100,7 +100,7 @@ public class LoginService
             Profile = new User()
             {
                 ProfileId = user.Id,
-                Name = user.Name,
+                Name = user.Alias,
                 Krus = user.GlassNumber,
                 AvatarUrl = user.Photo,
                 Dates = datoer
