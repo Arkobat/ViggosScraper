@@ -79,18 +79,19 @@ public class DatoController : ControllerBase
     }
 
     [HttpPost("login")]
-    public async Task<ViggoLoginResponse> Login([FromBody] LoginRequest request)
+    public async Task<LoginResponse> Login([FromBody] LoginRequest request)
     {
         var result = await _loginService.Login(request.Username, request.Password);
-        if (result.Status == 0) Response.StatusCode = (int) HttpStatusCode.Unauthorized;
+        if (!result.Success) Response.StatusCode = (int) HttpStatusCode.Unauthorized;
         return result;
     }
     
     [HttpPost("authenticate")]
-    public async Task<ViggoLoginResponse> Authenticate([FromBody] AuthRequest request)
+    public async Task<LoginResponse> Authenticate([FromBody] AuthRequest request)
     {
         var result = await _loginService.Authenticate(request.Token);
-        if (result.Status == 0) Response.StatusCode = (int) HttpStatusCode.Unauthorized;
+        if (!result.Success) Response.StatusCode = (int) HttpStatusCode.Unauthorized;
+        
         return result;
     }
 }
