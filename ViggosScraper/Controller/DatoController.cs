@@ -1,5 +1,4 @@
-﻿using System.Net;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using ViggosScraper.Model;
 using ViggosScraper.Service;
 
@@ -11,16 +10,14 @@ public class DatoController : ControllerBase
     private readonly SearchScraper _searchScraper;
     private readonly HighscoreScraper _highscoreScraper;
     private readonly SymbolService _symbolService;
-    private readonly LoginService _loginService;
 
     public DatoController(UserScraper userScraper, SearchScraper searchScraper, HighscoreScraper highscoreScraper,
-        SymbolService symbolService, LoginService loginService)
+        SymbolService symbolService)
     {
         _userScraper = userScraper;
         _searchScraper = searchScraper;
         _highscoreScraper = highscoreScraper;
         _symbolService = symbolService;
-        _loginService = loginService;
     }
 
     [HttpGet("search/{searchTerm}")]
@@ -78,20 +75,4 @@ public class DatoController : ControllerBase
             .ToList();
     }
 
-    [HttpPost("login")]
-    public async Task<LoginResponse> Login([FromBody] LoginRequest request)
-    {
-        var result = await _loginService.Login(request.Username, request.Password);
-        if (!result.Success) Response.StatusCode = (int) HttpStatusCode.Unauthorized;
-        return result;
-    }
-    
-    [HttpPost("authenticate")]
-    public async Task<LoginResponse> Authenticate([FromBody] AuthRequest request)
-    {
-        var result = await _loginService.Authenticate(request.Token);
-        if (!result.Success) Response.StatusCode = (int) HttpStatusCode.Unauthorized;
-        
-        return result;
-    }
 }

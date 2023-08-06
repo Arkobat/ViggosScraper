@@ -1,6 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using ViggosScraper.Database;
 using ViggosScraper.Middleware;
 using ViggosScraper.Service;
 
@@ -17,7 +19,11 @@ services
     .AddScoped<LoginService>()
     .AddScoped<SearchScraper>()
     .AddScoped<SymbolService>()
-    .AddScoped<UserScraper>();
+    .AddScoped<UserScraper>()
+    .AddDbContext<ViggosDbContext>(options =>
+    {
+        options.UseNpgsql(Environment.GetEnvironmentVariable("DB_CONNECTION_STRING"));
+    });
 
 
 services
