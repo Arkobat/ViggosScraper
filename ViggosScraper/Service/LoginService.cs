@@ -33,7 +33,7 @@ public class LoginService
             PropertyNameCaseInsensitive = true
         })!;
 
-        return ConvertResponse(res);
+        return await ConvertResponse(res);
     }
 
     public async Task<LoginResponse> Authenticate(string token)
@@ -54,10 +54,10 @@ public class LoginService
             PropertyNameCaseInsensitive = true
         })!;
 
-        return ConvertResponse(res);
+        return await ConvertResponse(res);
     }
 
-    private LoginResponse ConvertResponse(ViggoLoginResponse response)
+    private async Task<LoginResponse> ConvertResponse(ViggoLoginResponse response)
     {
         if (response.Status == 0)
         {
@@ -72,7 +72,9 @@ public class LoginService
         var dates = user!.Dates
             .Select(d => DateOnly.ParseExact(d.DateFormatted, "dd-MM-yyyy HH:mm", null))
             .ToList();
-        var symbols = _symbolService.GetSymbols(dates)
+        
+        var symbols = (await _symbolService.GetLogos(dates))
+            .SelectMany(s => s.Dates)
             .ToDictionary(d => d.Date, d => d);
 
 
@@ -85,7 +87,7 @@ public class LoginService
             {
                 Number = totalDates - i,
                 Date = date,
-                Symbol = symbols.GetValueOrDefault(date)?.Simple()
+                Symbol = symbols.GetValueOrDefault(date)?.ToDto()
             });
         }
 
@@ -94,7 +96,7 @@ public class LoginService
             Success = true,
             Message = response.Msg,
             Token = user.Token,
-            Profile = new User()
+            Profile = new UserDto()
             {
                 ProfileId = user.Id,
                 Name = user.Alias,
@@ -115,6 +117,8 @@ public class LoginService
             new KeyValuePair<string, string>("action", "forgotpassword"),
             new KeyValuePair<string, string>("mobile", phoneNumber),
         });
+        await _httpClient.PostAsync(url, formContent);
+        /*
         var response = await _httpClient.PostAsync(url, formContent);
         var json = await response.Content.ReadAsStringAsync();
 
@@ -122,5 +126,6 @@ public class LoginService
         {
             PropertyNameCaseInsensitive = true
         })!;
+        */
     }
 }

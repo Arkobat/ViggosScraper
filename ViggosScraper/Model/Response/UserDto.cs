@@ -1,6 +1,6 @@
 ﻿namespace ViggosScraper.Model;
 
-public class User
+public class UserDto
 {
     public required string ProfileId { get; set; }
     public required string Name { get; set; }

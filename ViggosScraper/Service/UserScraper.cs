@@ -16,10 +16,10 @@ public class UserScraper
         _symbolService = symbolService;
     }
 
-    public async Task<User> GetUser(string userId)
+    public async Task<UserDto> GetUser(string userId)
     {
         _logger.LogInformation("Getting user {userId}", userId);
-        
+
         var url = $"https://www.drikdato.dk/ViggosOdense/Profil/{userId}";
 
         var web = new HtmlWeb();
@@ -30,7 +30,7 @@ public class UserScraper
             _logger.LogInformation("User {userId} not found", userId);
             throw new HttpException(HttpStatusCode.NotFound, $"Could not find any user with that id {userId}");
         }
-        
+
         var userInfo = htmlDoc.DocumentNode.SelectNodes(
                 "/" +
                 "/div[@class='floatPod']" +
@@ -53,19 +53,19 @@ public class UserScraper
             "/img/@src"
         ).Single().Attributes["src"].Value;
 
-        var user = new User()
+        var user = new UserDto()
         {
             ProfileId = userId,
             Name = userInfo[0],
             AvatarUrl = $"https://www.drikdato.dk{avatar}",
             Krus = userInfo[1],
-            Dates = GetDates(htmlDoc)
+            Dates = await GetDates(htmlDoc)
         };
 
         return user;
     }
 
-    private List<Dato> GetDates(HtmlDocument htmlDoc)
+    private async Task<List<Dato>> GetDates(HtmlDocument htmlDoc)
     {
         var nodes = htmlDoc.DocumentNode.SelectNodes(
             "/" +
@@ -89,14 +89,17 @@ public class UserScraper
             .Select(s => ParseDate(s[1]))
             .ToList();
 
-        var symbols = _symbolService.GetSymbols(dates);
+        var symbols = await _symbolService.GetLogos(dates);
+        
         return dates
             .Order()
             .Select((date, i) => new Dato
             {
                 Number = i + 1,
                 Date = date,
-                Symbol = symbols.FirstOrDefault(s => s.Date == date)?.Simple()
+                Symbol = symbols
+                    .SelectMany(s => s.Dates)
+                    .FirstOrDefault(s => s.Date == date)?.ToDto()
             }).ToList();
     }
 

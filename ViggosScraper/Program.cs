@@ -1,6 +1,8 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using ViggosScraper.Database;
 using ViggosScraper.Middleware;
 using ViggosScraper.Service;
 
@@ -10,6 +12,11 @@ var configuration = builder.Configuration;
 var services = builder.Services;
 var environment = builder.Environment;
 
+
+var dbConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") ??
+                         configuration.GetConnectionString("Postgres") ??
+                         throw new Exception("No connection string found");
+
 services
     .AddScoped<ExceptionMiddleware>()
     .AddScoped<HttpClient>()
@@ -17,8 +24,8 @@ services
     .AddScoped<LoginService>()
     .AddScoped<SearchScraper>()
     .AddScoped<SymbolService>()
-    .AddScoped<UserScraper>();
-
+    .AddScoped<UserScraper>()
+    .AddDbContext<ViggosDb>(options => options.UseNpgsql(dbConnectionString));
 
 services
     .AddOptions()
