@@ -10,7 +10,7 @@ RUN dotnet publish "ViggosScraper.csproj" -c Release -o /app/publish
 RUN dotnet dev-certs https -ep /https/aspnetapp.pfx -p passw0rd
 
 FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS deploy
-WORKDIR /ticketbot
+WORKDIR /app
 COPY --from=build /https/* /https/
 COPY --from=build /app/publish .
 ENTRYPOINT ["dotnet", "ViggosScraper.dll"]
