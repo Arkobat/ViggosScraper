@@ -18,6 +18,7 @@ var dbConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRIN
                          throw new Exception("No connection string found");
 
 services
+    .AddLogging(l => l.AddConsole())
     .AddScoped<ExceptionMiddleware>()
     .AddScoped<HttpClient>()
     .AddScoped<HighscoreScraper>()
@@ -25,7 +26,9 @@ services
     .AddScoped<SearchScraper>()
     .AddScoped<SymbolService>()
     .AddScoped<UserScraper>()
-    .AddDbContext<ViggosDb>(options => options.UseNpgsql(dbConnectionString));
+    .AddScoped<UserService>()
+    .AddDbContext<ViggosDb>(options => options.UseNpgsql(dbConnectionString))
+    .AddHostedService<BackgroundUserScraper>();
 
 services
     .AddOptions()

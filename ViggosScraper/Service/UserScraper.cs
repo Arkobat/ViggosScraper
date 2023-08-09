@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using HtmlAgilityPack;
+using ViggosScraper.Extension;
 using ViggosScraper.Middleware;
 using ViggosScraper.Model;
 
@@ -52,13 +53,17 @@ public class UserScraper
             "/td" +
             "/img/@src"
         ).Single().Attributes["src"].Value;
-
+        
+        if (avatar?.StartsWith("/img/icon") ?? false) avatar = null;
+        var glass = userInfo[1].DigitOnly();
+        if (string.IsNullOrWhiteSpace(glass)) glass = null;
+        
         var user = new UserDto()
         {
             ProfileId = userId,
             Name = userInfo[0],
-            AvatarUrl = $"https://www.drikdato.dk{avatar}",
-            Krus = userInfo[1],
+            AvatarUrl = avatar is null ? null : $"https://www.drikdato.dk{avatar}",
+            Krus = glass,
             Dates = await GetDates(htmlDoc)
         };
 

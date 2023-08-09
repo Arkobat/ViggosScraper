@@ -19,7 +19,7 @@ public class Player
     public string Phone { get; set; } = null!;
     public string Token { get; set; } = null!;
     public string? Photo { get; set; }
-    public string GlassNumber { get; set; } = null!;
+    public string? GlassNumber { get; set; } = null!;
     public List<ViggoDato> Dates { get; set; } = null!;
 }
 

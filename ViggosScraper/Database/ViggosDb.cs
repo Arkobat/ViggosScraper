@@ -6,6 +6,7 @@ public class ViggosDb : DbContext
 {
     public DbSet<DbLogoGroup> LogoGroups { get; set; } = null!;
     public DbSet<DbLogo> LogosDates { get; set; } = null!;
+    public DbSet<DbUser> Users { get; set; }
 
     public ViggosDb(DbContextOptions options) : base(options)
     {

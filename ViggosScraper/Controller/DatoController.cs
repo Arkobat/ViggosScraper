@@ -6,15 +6,17 @@ namespace ViggosScraper.Controller;
 
 public class DatoController : ControllerBase
 {
+    private readonly UserService _userService;
     private readonly UserScraper _userScraper;
     private readonly SearchScraper _searchScraper;
     private readonly HighscoreScraper _highscoreScraper;
 
-    public DatoController(UserScraper userScraper, SearchScraper searchScraper, HighscoreScraper highscoreScraper)
+    public DatoController(UserScraper userScraper, SearchScraper searchScraper, HighscoreScraper highscoreScraper, UserService userService)
     {
         _userScraper = userScraper;
         _searchScraper = searchScraper;
         _highscoreScraper = highscoreScraper;
+        _userService = userService;
     }
 
     [HttpGet("search/{searchTerm}")]
@@ -26,7 +28,9 @@ public class DatoController : ControllerBase
     [HttpGet("profile/{profileId}")]
     public async Task<UserDto> GetUser(string profileId)
     {
-        return await _userScraper.GetUser(profileId);
+        await _userService.GetUser(profileId);
+        var userDto = await _userScraper.GetUser(profileId);
+        return userDto;
     }
 
     [HttpGet("highscore")]
@@ -45,5 +49,6 @@ public class DatoController : ControllerBase
             .Where(r1 => result2.Dates.Any(r2 => r1.Date == r2.Date))
             .ToList();
     }
+    
 }
 
