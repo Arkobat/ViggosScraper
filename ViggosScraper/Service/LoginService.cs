@@ -14,7 +14,7 @@ public class LoginService
         _symbolService = symbolService;
     }
 
-    public async Task<LoginResponse> Login(string username, string password)
+    public async Task<LoginResponse> Login(string phoneNumber, string password)
     {
         var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         var url = $"https://www.drikdato.app/_service/service.php?ts={now}";
@@ -22,13 +22,11 @@ public class LoginService
         var formContent = new FormUrlEncodedContent(new[]
         {
             new KeyValuePair<string, string>("action", "login"),
-            new KeyValuePair<string, string>("mobile", username),
+            new KeyValuePair<string, string>("mobile", phoneNumber),
             new KeyValuePair<string, string>("password", password),
         });
         var response = await _httpClient.PostAsync(url, formContent);
-
         var json = await response.Content.ReadAsStringAsync();
-
 
         var res = JsonSerializer.Deserialize<ViggoLoginResponse>(json, new JsonSerializerOptions()
         {
@@ -49,7 +47,6 @@ public class LoginService
             new KeyValuePair<string, string>("token", token),
         });
         var response = await _httpClient.PostAsync(url, formContent);
-
         var json = await response.Content.ReadAsStringAsync();
 
         var res = JsonSerializer.Deserialize<ViggoLoginResponse>(json, new JsonSerializerOptions()
@@ -106,5 +103,24 @@ public class LoginService
                 Dates = datoer
             }
         };
+    }
+
+    public async Task ResetPassword(string phoneNumber)
+    {
+        var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var url = $"https://www.drikdato.app/_service/service.php?ts={now}";
+
+        var formContent = new FormUrlEncodedContent(new[]
+        {
+            new KeyValuePair<string, string>("action", "forgotpassword"),
+            new KeyValuePair<string, string>("mobile", phoneNumber),
+        });
+        var response = await _httpClient.PostAsync(url, formContent);
+        var json = await response.Content.ReadAsStringAsync();
+
+        var res = JsonSerializer.Deserialize<ViggoLoginResponse>(json, new JsonSerializerOptions()
+        {
+            PropertyNameCaseInsensitive = true
+        })!;
     }
 }

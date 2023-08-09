@@ -94,4 +94,11 @@ public class DatoController : ControllerBase
         
         return result;
     }
+    
+    [HttpPost("reset-password")]
+    public async Task ResetPassword([FromBody] ResetPasswordRequest request)
+    {
+       await _loginService.ResetPassword(request.PhoneNumber);
+    }
 }
+
