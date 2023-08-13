@@ -17,12 +17,17 @@ public class ViggosDb : DbContext
         builder.Entity<DbLogoGroup>(logo =>
         {
             logo.HasKey(t => t.Id);
-            logo.HasIndex(f => f.Symbol);
+            logo.HasIndex(f => f.Symbol).IsUnique();
             logo.HasMany(l => l.Dates)
                 .WithOne(d => d.Group)
                 .HasForeignKey(d => d.GroupId)
                 .HasPrincipalKey(d => d.Id)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        builder.Entity<DbUser>(user =>
+        {
+            user.HasIndex(u => u.ProfileId).IsUnique();
         });
     }
 }

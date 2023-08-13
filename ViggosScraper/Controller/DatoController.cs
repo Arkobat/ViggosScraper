@@ -34,9 +34,9 @@ public class DatoController : ControllerBase
     }
 
     [HttpGet("highscore")]
-    public async Task<List<HighscoreEntry>> GetHighscore()
+    public async Task<List<HighscoreEntry>> GetHighscore([FromQuery] int? year)
     {
-        return await _highscoreScraper.GetHighscore(null);
+        return await _highscoreScraper.GetHighscore(year);
     }
 
     [HttpGet("mutual/{user1}/{user2}")]

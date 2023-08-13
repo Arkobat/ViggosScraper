@@ -20,6 +20,30 @@ public class BackgroundUserScraper : BackgroundService
         var scope = _serviceProvider.CreateScope();
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<BackgroundUserScraper>>();
         await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+
+        /*
+        try
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<ViggosDb>();
+            var profileIds = await dbContext.Users.Select(u => u.ProfileId).ToListAsync(cancellationToken: stoppingToken);
+            var max = profileIds.Select(int.Parse).Max();
+
+            var userService = scope.ServiceProvider.GetRequiredService<UserService>();
+            var userScraper = scope.ServiceProvider.GetRequiredService<UserScraper>();
+            while (true)
+            {
+                var user = await userScraper.GetUser((++max).ToString());
+                logger.LogInformation("Fetched new user {UserId}", user.ProfileId);
+                await userService.UpsertUser(user, null);
+           //     await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken);
+            }
+        }
+        catch (HttpException e) when(e.HttpStatus == 404)
+        {
+            Console.WriteLine(e);
+        }
+        */
+        
         while (true)
         {
             var lastRun = DateTimeOffset.UtcNow;
