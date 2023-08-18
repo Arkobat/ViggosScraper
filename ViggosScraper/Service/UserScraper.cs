@@ -108,7 +108,7 @@ public class UserScraper
             }).ToList();
     }
 
-    private static DateOnly ParseDate(string date)
+    public static DateOnly ParseDate(string date)
     {
         var data = date.Replace(".", "").Split(" ");
 

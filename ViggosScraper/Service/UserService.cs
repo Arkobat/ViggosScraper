@@ -42,7 +42,12 @@ public class UserService
                 Name = scrapedUser.Name,
                 AvatarUrl = scrapedUser.AvatarUrl,
                 Glass = scrapedUser.Krus,
-                LastUpdated = DateTimeOffset.UtcNow
+                LastUpdated = DateTimeOffset.UtcNow,
+                Datoer = scrapedUser.Dates.Select(d => new DbDato()
+                {
+                    Number = d.Number,
+                    Date = d.Date,
+                }).ToList()
             };
             await _dbContext.Users.AddAsync(dbUser);
             await _dbContext.SaveChangesAsync();

@@ -1,4 +1,6 @@
 ﻿using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using ViggosScraper.Database;
 using ViggosScraper.Model;
 
 namespace ViggosScraper.Service;
@@ -7,11 +9,15 @@ public class LoginService
 {
     private readonly HttpClient _httpClient;
     private readonly SymbolService _symbolService;
+    private readonly UserService _userService;
+    private readonly ViggosDb _dbContext;
 
-    public LoginService(HttpClient httpClient, SymbolService symbolService)
+    public LoginService(HttpClient httpClient, SymbolService symbolService, UserService userService, ViggosDb dbContext)
     {
         _httpClient = httpClient;
         _symbolService = symbolService;
+        _userService = userService;
+        _dbContext = dbContext;
     }
 
     public async Task<LoginResponse> Login(string phoneNumber, string password)
@@ -59,6 +65,7 @@ public class LoginService
 
     private async Task<LoginResponse> ConvertResponse(ViggoLoginResponse response)
     {
+        // Login failed
         if (response.Status == 0)
         {
             return new LoginResponse
@@ -69,14 +76,17 @@ public class LoginService
         }
 
         var user = response.Player;
+
+
+        // Select all dates from the user
         var dates = user!.Dates
             .Select(d => DateOnly.ParseExact(d.DateFormatted, "dd-MM-yyyy HH:mm", null))
             .ToList();
-        
+
+        // Get all symbols for the dates
         var symbols = (await _symbolService.GetLogos(dates))
             .SelectMany(s => s.Dates)
             .ToDictionary(d => d.Date, d => d);
-
 
         var totalDates = user.Dates.Count;
         var datoer = new List<Dato>();
@@ -91,20 +101,52 @@ public class LoginService
             });
         }
 
+        var scrapedUser = new UserDto()
+        {
+            ProfileId = user.Id,
+            Name = user.Alias,
+            Krus = user.GlassNumber,
+            AvatarUrl = user.Photo,
+            Dates = datoer
+        };
+
+        // Load the user from the database
+        var dbUser = await _dbContext.Users
+            .Include(u => u.Datoer)
+            .FirstOrDefaultAsync(u => u.ProfileId == user.Id);
+        if (dbUser is null) dbUser = await _userService.UpsertUser(scrapedUser, dbUser);
+
+        var asd = user.Dates
+            .Where(d => !string.IsNullOrEmpty(d.Comment))
+            .ToList();
+        // Update comments
+        var dbChanges = false;
+        user.Dates
+            .Where(d => !string.IsNullOrEmpty(d.Comment))
+            .ToList()
+            .ForEach(d =>
+            {
+                var dbDate = dbUser.Datoer.FirstOrDefault(d2 => d2.Date == ParseDate(d.DateFormatted));
+                if (dbDate is null) return;
+                if (!string.IsNullOrWhiteSpace(dbDate.Comment)) return;
+                dbDate.Comment = d.Comment;
+                dbChanges = true;
+            });
+        if (dbChanges) await _dbContext.SaveChangesAsync();
+
+        // Return the final response
         return new LoginResponse
         {
             Success = true,
             Message = response.Msg,
             Token = user.Token,
-            Profile = new UserDto()
-            {
-                ProfileId = user.Id,
-                Name = user.Alias,
-                Krus = user.GlassNumber,
-                AvatarUrl = user.Photo,
-                Dates = datoer
-            }
+            Profile = scrapedUser
         };
+    }
+
+    private static DateOnly ParseDate(string date)
+    {
+        return DateOnly.ParseExact(date, "dd-MM-yyyy HH:mm", null);
     }
 
     public async Task ResetPassword(string phoneNumber)

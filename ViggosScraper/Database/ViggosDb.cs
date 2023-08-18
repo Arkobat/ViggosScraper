@@ -28,6 +28,9 @@ public class ViggosDb : DbContext
         builder.Entity<DbUser>(user =>
         {
             user.HasIndex(u => u.ProfileId).IsUnique();
+            user.HasMany(u => u.Datoer)
+                .WithOne(d => d.User)
+                .HasForeignKey(d => d.UserId);
         });
     }
 }
