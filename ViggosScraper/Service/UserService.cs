@@ -19,7 +19,9 @@ public class UserService
 
     public async Task<DbUser> GetUser(string userId)
     {
-        var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.ProfileId == userId);
+        var user = await _dbContext.Users
+            .Include(u => u.Permissions)
+            .FirstOrDefaultAsync(u => u.ProfileId == userId);
 
         if (user is null || user.LastUpdated < DateTimeOffset.Now - BackgroundUserScraper.UpdateInterval)
         {

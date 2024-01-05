@@ -1,6 +1,9 @@
 ﻿using System.Net;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ViggosScraper.Model;
+using ViggosScraper.Model.Request;
+using ViggosScraper.Model.Response;
 using ViggosScraper.Service;
 
 namespace ViggosScraper.Controller;
@@ -36,4 +39,12 @@ public class LoginController : ControllerBase
     {
         await _loginService.ResetPassword(request.PhoneNumber);
     }
+    
+    [Authorize]
+    [HttpPost("verify-secret")]
+    public async Task<StatusResponse> VerifySecret([FromBody] CodeRequest request)
+    {
+        return await _loginService.VerifySecret(request);
+    }
+    
 }

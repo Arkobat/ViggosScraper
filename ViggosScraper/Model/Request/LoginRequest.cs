@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace ViggosScraper.Model;
+namespace ViggosScraper.Model.Request;
 
 public class LoginRequest
 {

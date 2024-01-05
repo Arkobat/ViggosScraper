@@ -1,5 +1,6 @@
 ﻿using System.Net;
 using System.Text.Json;
+using ViggosScraper.Model.Exception;
 
 namespace ViggosScraper.Middleware;
 
@@ -63,17 +64,5 @@ public class ErrorDetails
         {
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         });
-    }
-}
-
-public class HttpException : System.Exception
-{
-    public int HttpStatus { get; }
-    public override string Message { get; }
-
-    public HttpException(HttpStatusCode httpStatus, string message)
-    {
-        HttpStatus = (int) httpStatus;
-        Message = message;
     }
 }

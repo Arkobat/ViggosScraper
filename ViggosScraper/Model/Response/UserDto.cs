@@ -1,4 +1,6 @@
-﻿namespace ViggosScraper.Model;
+﻿using ViggosScraper.Model.Response;
+
+namespace ViggosScraper.Model;
 
 public class UserDto
 {

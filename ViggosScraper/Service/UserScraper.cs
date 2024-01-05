@@ -1,8 +1,8 @@
-﻿using System.Net;
-using HtmlAgilityPack;
+﻿using HtmlAgilityPack;
 using ViggosScraper.Extension;
-using ViggosScraper.Middleware;
 using ViggosScraper.Model;
+using ViggosScraper.Model.Exception;
+using ViggosScraper.Model.Response;
 
 namespace ViggosScraper.Service;
 
@@ -29,7 +29,7 @@ public class UserScraper
         if (htmlDoc.DocumentNode.InnerText.Contains("Profilen blev ikke fundet..."))
         {
             _logger.LogInformation("User {userId} not found", userId);
-            throw new HttpException(HttpStatusCode.NotFound, $"Could not find any user with that id {userId}");
+            throw new NotFoundException($"Could not find any user with that id {userId}");
         }
 
         var userInfo = htmlDoc.DocumentNode.SelectNodes(
@@ -53,11 +53,11 @@ public class UserScraper
             "/td" +
             "/img/@src"
         ).Single().Attributes["src"].Value;
-        
+
         if (avatar?.StartsWith("/img/icon") ?? false) avatar = null;
         var glass = userInfo[1].DigitOnly();
         if (string.IsNullOrWhiteSpace(glass)) glass = null;
-        
+
         var user = new UserDto()
         {
             ProfileId = userId,
@@ -95,7 +95,7 @@ public class UserScraper
             .ToList();
 
         var symbols = await _symbolService.GetLogos(dates);
-        
+
         return dates
             .Order()
             .Select((date, i) => new Dato

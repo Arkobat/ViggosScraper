@@ -1,7 +1,10 @@
 ﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using ViggosScraper.Database;
+using ViggosScraper.Middleware;
 using ViggosScraper.Model;
+using ViggosScraper.Model.Request;
+using ViggosScraper.Model.Response;
 
 namespace ViggosScraper.Service;
 
@@ -11,13 +14,18 @@ public class LoginService
     private readonly SymbolService _symbolService;
     private readonly UserService _userService;
     private readonly ViggosDb _dbContext;
+    private readonly HttpSession _httpSession;
+    private readonly ICache<string, AuthResponse> _authCache;
 
-    public LoginService(HttpClient httpClient, SymbolService symbolService, UserService userService, ViggosDb dbContext)
+    public LoginService(HttpClient httpClient, SymbolService symbolService, UserService userService, ViggosDb dbContext,
+        HttpSession httpSession, ICache<string, AuthResponse> authCache)
     {
         _httpClient = httpClient;
         _symbolService = symbolService;
         _userService = userService;
         _dbContext = dbContext;
+        _httpSession = httpSession;
+        _authCache = authCache;
     }
 
     public async Task<LoginResponse> Login(string phoneNumber, string password)
@@ -83,6 +91,10 @@ public class LoginService
             .Select(d => DateOnly.ParseExact(d.DateFormatted, "dd-MM-yyyy HH:mm", null))
             .ToList();
 
+        var abc = (await _symbolService.GetLogos(dates))
+            .SelectMany(s => s.Dates)
+            .ToList();
+
         // Get all symbols for the dates
         var symbols = (await _symbolService.GetLogos(dates))
             .SelectMany(s => s.Dates)
@@ -92,12 +104,17 @@ public class LoginService
         var datoer = new List<Dato>();
         for (var i = totalDates - 1; i >= 0; i--)
         {
-            var date = DateOnly.ParseExact(user.Dates[i].DateFormatted, "dd-MM-yyyy HH:mm", null);
+            var start = DateTimeOffset.ParseExact(user.Dates[i].DateFormatted, "dd-MM-yyyy HH:mm", null);
+            var end = DateTimeOffset.ParseExact(user.Dates[i].EndDateFormatted, "dd-MM-yyyy HH:mm", null);
+            var date = DateOnly.FromDateTime(start.Date);
+
             datoer.Add(new Dato()
             {
                 Number = totalDates - i,
                 Date = date,
-                Symbol = symbols.GetValueOrDefault(date)?.ToDto()
+                Symbol = symbols.GetValueOrDefault(date)?.ToDto(),
+                Start = start,
+                Finish = end,
             });
         }
 
@@ -113,12 +130,10 @@ public class LoginService
         // Load the user from the database
         var dbUser = await _dbContext.Users
             .Include(u => u.Datoer)
+            .Include(u => u.Permissions)
             .FirstOrDefaultAsync(u => u.ProfileId == user.Id);
         if (dbUser is null) dbUser = await _userService.UpsertUser(scrapedUser, dbUser);
 
-        var asd = user.Dates
-            .Where(d => !string.IsNullOrEmpty(d.Comment))
-            .ToList();
         // Update comments
         var dbChanges = false;
         user.Dates
@@ -140,7 +155,8 @@ public class LoginService
             Success = true,
             Message = response.Msg,
             Token = user.Token,
-            Profile = scrapedUser
+            Profile = scrapedUser,
+            Permissions = dbUser.Permissions.Select(p => p.Name).ToList()
         };
     }
 
@@ -160,14 +176,51 @@ public class LoginService
             new KeyValuePair<string, string>("mobile", phoneNumber),
         });
         await _httpClient.PostAsync(url, formContent);
-        /*
-        var response = await _httpClient.PostAsync(url, formContent);
-        var json = await response.Content.ReadAsStringAsync();
+    }
 
-        var res = JsonSerializer.Deserialize<ViggoLoginResponse>(json, new JsonSerializerOptions()
+    public async Task<StatusResponse> VerifySecret(CodeRequest request)
+    {
+        var user = _httpSession.GetAuthentication();
+        var code = request.Code.ToLower();
+
+        if (user.Permissions == null) user.Permissions = new List<string>();
+        if (user.Permissions!.Contains(code))
         {
-            PropertyNameCaseInsensitive = true
-        })!;
-        */
+            return new StatusResponse
+            {
+                Success = false,
+                Message = "Du har allerede indløst denne kode"
+            };
+        }
+
+        switch (code)
+        {
+            case Role.BeerPong:
+                await AddRoleToUser(user.Profile!.ProfileId, code);
+                _authCache.Remove(user.Token!);
+                return new StatusResponse
+                {
+                    Success = true,
+                    Message = "Koden er blevet indløst"
+                };
+        }
+
+        return new StatusResponse
+        {
+            Success = false,
+            Message = "Ugyldig kode"
+        };
+    }
+
+    private async Task AddRoleToUser(string userId, string roleId)
+    {
+        var user = await _dbContext.Users
+            .Include(u => u.Permissions)
+            .FirstOrDefaultAsync(u => u.ProfileId == userId);
+        user!.Permissions.Add(new Permission
+        {
+            Name = roleId,
+        });
+        await _dbContext.SaveChangesAsync();
     }
 }

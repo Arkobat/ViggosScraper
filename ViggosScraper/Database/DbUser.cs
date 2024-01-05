@@ -8,8 +8,12 @@ public class DbUser
     public required string? AvatarUrl { get; set; }
     public required string? Glass { get; set; }
     public List<DbDato> Datoer { get; set; } = null!;
+    public List<BattleResult> Battles { get; set; } = null!;
+    public List<Permission> Permissions { get; set; } = new();
 
     public DateTimeOffset LastUpdated { get; set; }
+
+    public bool HasPermission(string permission) => Permissions.Any(p => p.Name == permission);
 }
 
 public class DbDato

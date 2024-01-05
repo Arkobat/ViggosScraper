@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ViggosScraper.Model;
+using ViggosScraper.Model.Response;
 using ViggosScraper.Service;
 
 namespace ViggosScraper.Controller;

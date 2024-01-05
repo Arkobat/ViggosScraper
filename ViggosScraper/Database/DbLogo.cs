@@ -1,5 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using ViggosScraper.Model;
+using ViggosScraper.Model.Response;
 
 namespace ViggosScraper.Database;
 
@@ -15,6 +16,7 @@ public class DbLogo
     [Key] public int Id { get; set; }
     public required string Description { get; set; }
     public required DateOnly Date { get; set; }
+    public bool Private { get; set; } = false;
 
     public int GroupId { get; set; }
     public DbLogoGroup Group { get; set; } = null!;

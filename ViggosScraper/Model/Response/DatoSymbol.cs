@@ -1,4 +1,4 @@
-﻿namespace ViggosScraper.Model;
+﻿namespace ViggosScraper.Model.Response;
 
 
 public class SimpleDatoSymbol

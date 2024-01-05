@@ -80,12 +80,17 @@ public class SymbolService
                 new() {Description = "Advent #2", Date = new DateOnly(2022, 12, 04)},
                 new() {Description = "Advent #3", Date = new DateOnly(2022, 12, 11)},
                 new() {Description = "Advent #4", Date = new DateOnly(2022, 12, 18)},
+                new() {Description = "Advent #1", Date = new DateOnly(2023, 12, 03)},
+                new() {Description = "Advent #2", Date = new DateOnly(2023, 12, 10)},
+                new() {Description = "Advent #3", Date = new DateOnly(2023, 12, 17)},
+                new() {Description = "Advent #4", Date = new DateOnly(2023, 12, 24)},
             }},
             new() {Symbol = "2",  Dates = new List<DbLogo>() {
                 new() {Description = "2 Tals Dato", Date = new DateOnly(2022, 02, 22)},
             }},
             new() {Symbol = "Nissehue",  Dates = new List<DbLogo>() {
                 new() {Description = "J-dag", Date = new DateOnly(2019, 11, 01)},
+                new() {Description = "J-dag", Date = new DateOnly(2023, 11, 03)},
             }},
             new() {Symbol = "Corona",  Dates = new List<DbLogo>() {
                 new() {Description = "Tillids Dato #1", Date = new DateOnly(2020, 04, 24)},
@@ -97,7 +102,12 @@ public class SymbolService
             }},
             new() {Symbol = "Stjerneskud",  Dates = new List<DbLogo>() {
                 new() {Description = "Skudår", Date = new DateOnly(2020, 02, 29)},
-            }}
+            }},
+            
+            // Private dates, which are only for users attending a specific event
+            new() {Symbol = "Fodbold",  Dates = new List<DbLogo>() {
+                new() {Description = "Fodbold", Date = new DateOnly(2023, 02, 04), Private = true},
+            }},
         }; 
         // @formatter:on
         await _dbContext.LogoGroups.AddRangeAsync(defaultData);

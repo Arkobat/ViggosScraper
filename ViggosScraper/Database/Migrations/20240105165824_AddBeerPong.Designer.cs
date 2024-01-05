@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using ViggosScraper.Database;
@@ -11,9 +12,11 @@ using ViggosScraper.Database;
 namespace ViggosScraper.Database.Migrations
 {
     [DbContext(typeof(ViggosDb))]
-    partial class ViggosDbModelSnapshot : ModelSnapshot
+    [Migration("20240105165824_AddBeerPong")]
+    partial class AddBeerPong
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
