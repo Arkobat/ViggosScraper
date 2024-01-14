@@ -19,7 +19,7 @@ public class BeerPongController : ControllerBase
     }
 
     [HttpGet("users")]
-    public async Task<List<HighscoreEntry>> GetAllUsers()
+    public async Task<List<BeerpongHighscoreEntry>> GetAllUsers()
     {
         return await _beerPongService.GetAllPersons();
     }

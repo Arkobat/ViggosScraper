@@ -17,7 +17,7 @@ public class BeerPongService
     {
         _dbContext = dbContext;
         _httpSession = httpSession;
-        this._userService = userService;
+        _userService = userService;
     }
 
     public async Task AddBattle(CreateBattleDto request)
@@ -62,7 +62,7 @@ public class BeerPongService
         await _dbContext.SaveChangesAsync();
     }
 
-    public async Task<List<HighscoreEntry>> GetAllPersons()
+    public async Task<List<BeerpongHighscoreEntry>> GetAllPersons()
     {
         var users = await _dbContext.Users
             .Where(u => u.Permissions.Any(p => p.Name == Role.BeerPong))
@@ -76,12 +76,13 @@ public class BeerPongService
         }).OrderByDescending(u => u.Points);
 
         var index = 1;
-        return ordered.Select(u => new HighscoreEntry
+        return ordered.Select(u => new BeerpongHighscoreEntry
         {
             Position = index++,
             Name = u.User.Name,
             ProfileId = u.User.ProfileId,
-            TotalDates = u.Points
+            TotalDates = u.Points,
+            Firstname = u.User.RealName
         }).ToList();
     }
 

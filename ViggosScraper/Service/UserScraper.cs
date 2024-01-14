@@ -62,6 +62,7 @@ public class UserScraper
         {
             ProfileId = userId,
             Name = userInfo[0],
+            RealName = null,
             AvatarUrl = avatar is null ? null : $"https://www.drikdato.dk{avatar}",
             Krus = glass,
             Dates = await GetDates(htmlDoc)

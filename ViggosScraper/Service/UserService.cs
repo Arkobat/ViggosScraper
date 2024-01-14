@@ -23,7 +23,7 @@ public class UserService
             .Include(u => u.Permissions)
             .FirstOrDefaultAsync(u => u.ProfileId == userId);
 
-        if (user is null || user.LastUpdated < DateTimeOffset.Now - BackgroundUserScraper.UpdateInterval)
+        if (user is null || user.ShouldUpdate())
         {
             _logger.LogInformation("Scraping user {UserId}", userId);
             var scrapedUser = await _userScraper.GetUser(userId);
@@ -42,6 +42,7 @@ public class UserService
             {
                 ProfileId = scrapedUser.ProfileId,
                 Name = scrapedUser.Name,
+                RealName = scrapedUser.RealName,
                 AvatarUrl = scrapedUser.AvatarUrl,
                 Glass = scrapedUser.Krus,
                 LastUpdated = DateTimeOffset.UtcNow,
@@ -57,6 +58,7 @@ public class UserService
         }
 
         dbUser.Name = scrapedUser.Name;
+        if (scrapedUser.RealName is not null) dbUser.RealName = scrapedUser.RealName;
         dbUser.AvatarUrl = scrapedUser.AvatarUrl;
         dbUser.Glass = scrapedUser.Krus;
         dbUser.LastUpdated = DateTimeOffset.UtcNow;

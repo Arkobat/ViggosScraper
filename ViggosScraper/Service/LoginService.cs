@@ -16,9 +16,10 @@ public class LoginService
     private readonly ViggosDb _dbContext;
     private readonly HttpSession _httpSession;
     private readonly ICache<string, AuthResponse> _authCache;
+    private readonly ILogger<LoginService> _logger;
 
     public LoginService(HttpClient httpClient, SymbolService symbolService, UserService userService, ViggosDb dbContext,
-        HttpSession httpSession, ICache<string, AuthResponse> authCache)
+        HttpSession httpSession, ICache<string, AuthResponse> authCache, ILogger<LoginService> logger)
     {
         _httpClient = httpClient;
         _symbolService = symbolService;
@@ -26,6 +27,7 @@ public class LoginService
         _dbContext = dbContext;
         _httpSession = httpSession;
         _authCache = authCache;
+        _logger = logger;
     }
 
     public async Task<LoginResponse> Login(string phoneNumber, string password)
@@ -91,10 +93,6 @@ public class LoginService
             .Select(d => DateOnly.ParseExact(d.DateFormatted, "dd-MM-yyyy HH:mm", null))
             .ToList();
 
-        var abc = (await _symbolService.GetLogos(dates))
-            .SelectMany(s => s.Dates)
-            .ToList();
-
         // Get all symbols for the dates
         var symbols = (await _symbolService.GetLogos(dates))
             .SelectMany(s => s.Dates)
@@ -122,6 +120,7 @@ public class LoginService
         {
             ProfileId = user.Id,
             Name = user.Alias,
+            RealName = user.Name,
             Krus = user.GlassNumber,
             AvatarUrl = user.Photo,
             Dates = datoer
@@ -132,7 +131,7 @@ public class LoginService
             .Include(u => u.Datoer)
             .Include(u => u.Permissions)
             .FirstOrDefaultAsync(u => u.ProfileId == user.Id);
-        if (dbUser is null) dbUser = await _userService.UpsertUser(scrapedUser, dbUser);
+        if (dbUser is null || dbUser.ShouldUpdate()) dbUser = await _userService.UpsertUser(scrapedUser, dbUser);
 
         // Update comments
         var dbChanges = false;
