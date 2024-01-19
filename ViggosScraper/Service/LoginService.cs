@@ -222,4 +222,57 @@ public class LoginService
         });
         await _dbContext.SaveChangesAsync();
     }
+
+    public async Task<StatusResponse> SetAvatar(IFormFile file)
+    {
+        var user = _httpSession.GetAuthentication();
+
+        using var memoryStream = new MemoryStream();
+        await file.OpenReadStream().CopyToAsync(memoryStream);
+        var image = memoryStream.ToArray();
+
+        var form = new MultipartFormDataContent();
+
+        form.Add(new ByteArrayContent(image, 0, image.Length), "file", $"{Guid.NewGuid()}.jpg");
+        form.Add(new StringContent(user.Profile!.ProfileId), "target");
+        form.Add(new StringContent("640"), "maxwidth");
+        form.Add(new StringContent("480"), "maxheight");
+
+        var uploadResponse = await _httpClient.PostAsync("https://www.drikdato.app/_uploads/upload.php", form);
+        if (!uploadResponse.IsSuccessStatusCode)
+            return new StatusResponse
+            {
+                Success = false,
+                Message = "Kunne ikke ændre avatar"
+            };
+
+        var fileId = await uploadResponse.Content.ReadAsStringAsync();
+
+
+        var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var url = $"https://www.drikdato.app/_service/service.php?ts={now}";
+
+        var formContent = new FormUrlEncodedContent(new[]
+        {
+            new KeyValuePair<string, string>("action", "setphoto"),
+            new KeyValuePair<string, string>("filename", fileId),
+            new KeyValuePair<string, string>("id", user.Profile.ProfileId),
+            new KeyValuePair<string, string>("token", user.Token!),
+        });
+        var changeResponse = await _httpClient.PostAsync(url, formContent);
+
+        if (!changeResponse.IsSuccessStatusCode)
+            return new StatusResponse
+            {
+                Success = false,
+                Message = "Kunne ikke ændre avatar"
+            };
+
+
+        return new StatusResponse
+        {
+            Success = true,
+            Message = "Avatar ændret"
+        };
+    }
 }

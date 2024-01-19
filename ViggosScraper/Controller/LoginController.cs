@@ -24,27 +24,33 @@ public class LoginController : ControllerBase
         if (!result.Success) Response.StatusCode = (int) HttpStatusCode.Unauthorized;
         return result;
     }
-    
+
     [HttpPost("authenticate")]
     public async Task<LoginResponse> Authenticate([FromBody] AuthRequest request)
     {
         var result = await _loginService.Authenticate(request.Token);
         if (!result.Success) Response.StatusCode = (int) HttpStatusCode.Unauthorized;
-        
+
         return result;
     }
-    
+
     [HttpPost("reset-password")]
     public async Task ResetPassword([FromBody] ResetPasswordRequest request)
     {
         await _loginService.ResetPassword(request.PhoneNumber);
     }
-    
+
     [Authorize]
     [HttpPost("verify-secret")]
     public async Task<StatusResponse> VerifySecret([FromBody] CodeRequest request)
     {
         return await _loginService.VerifySecret(request);
     }
-    
+
+    [Authorize]
+    [HttpPost("avatar")]
+    public async Task<StatusResponse> SetAvatar(IFormFile file)
+    {
+        return await _loginService.SetAvatar(file);
+    }
 }
