@@ -49,6 +49,7 @@ public class LoginController : ControllerBase
 
     [Authorize]
     [HttpPost("avatar")]
+    [RequestSizeLimit(10_000_000)] // 10 MB
     public async Task<StatusResponse> SetAvatar(IFormFile file)
     {
         return await _loginService.SetAvatar(file);
