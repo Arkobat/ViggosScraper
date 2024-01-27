@@ -92,7 +92,7 @@ public class BackgroundUserScraper : BackgroundService
             foreach (var user in usersToLoad)
             {
                 logger.LogInformation("Updating user {UserId}", user.ProfileId);
-                var scrapedUser = await userScraper.GetUser(user.ProfileId);
+                var scrapedUser = await userScraper.GetUser(user, user.ProfileId);
                 await userService.UpsertUser(scrapedUser, user);
                 await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
             }

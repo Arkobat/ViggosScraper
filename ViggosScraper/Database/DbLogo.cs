@@ -16,7 +16,7 @@ public class DbLogo
     [Key] public int Id { get; set; }
     public required string Description { get; set; }
     public required DateOnly Date { get; set; }
-    public bool Private { get; set; } = false;
+    [MaxLength(100)] public string? Permission { get; set; }
 
     public int GroupId { get; set; }
     public DbLogoGroup Group { get; set; } = null!;

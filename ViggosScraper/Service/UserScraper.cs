@@ -1,4 +1,5 @@
 ﻿using HtmlAgilityPack;
+using ViggosScraper.Database;
 using ViggosScraper.Extension;
 using ViggosScraper.Model;
 using ViggosScraper.Model.Exception;
@@ -17,7 +18,7 @@ public class UserScraper
         _symbolService = symbolService;
     }
 
-    public async Task<UserDto> GetUser(string userId)
+    public async Task<UserDto> GetUser(DbUser? dbUser, string userId)
     {
         _logger.LogInformation("Getting user {userId}", userId);
 
@@ -65,13 +66,13 @@ public class UserScraper
             RealName = null,
             AvatarUrl = avatar is null ? null : $"https://www.drikdato.dk{avatar}",
             Krus = glass,
-            Dates = await GetDates(htmlDoc)
+            Dates = await GetDates(htmlDoc, dbUser?.Permissions.Select(p => p.Name).ToList() ?? new List<string>())
         };
 
         return user;
     }
 
-    private async Task<List<Dato>> GetDates(HtmlDocument htmlDoc)
+    private async Task<List<Dato>> GetDates(HtmlDocument htmlDoc, List<string> permissions)
     {
         var nodes = htmlDoc.DocumentNode.SelectNodes(
             "/" +
@@ -95,7 +96,7 @@ public class UserScraper
             .Select(s => ParseDate(s[1]))
             .ToList();
 
-        var symbols = await _symbolService.GetLogos(dates);
+        var symbols = await _symbolService.GetLogos(dates, permissions);
 
         return dates
             .Order()

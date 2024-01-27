@@ -26,7 +26,7 @@ public class UserService
         if (user is null || user.ShouldUpdate())
         {
             _logger.LogInformation("Scraping user {UserId}", userId);
-            var scrapedUser = await _userScraper.GetUser(userId);
+            var scrapedUser = await _userScraper.GetUser(user, userId);
             user = await UpsertUser(scrapedUser, user);
             await _dbContext.SaveChangesAsync();
         }

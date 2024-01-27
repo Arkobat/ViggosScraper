@@ -1,6 +1,5 @@
 ﻿using HtmlAgilityPack;
 using ViggosScraper.Extension;
-using ViggosScraper.Model;
 using ViggosScraper.Model.Response;
 
 namespace ViggosScraper.Service;

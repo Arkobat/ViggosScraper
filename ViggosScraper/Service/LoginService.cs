@@ -93,8 +93,16 @@ public class LoginService
             .Select(d => DateOnly.ParseExact(d.DateFormatted, "dd-MM-yyyy HH:mm", null))
             .ToList();
 
+        // Load the user from the database
+        var dbUser = await _dbContext.Users
+            .Include(u => u.Datoer)
+            .Include(u => u.Permissions)
+            .FirstOrDefaultAsync(u => u.ProfileId == user.Id);
+
         // Get all symbols for the dates
-        var symbols = (await _symbolService.GetLogos(dates))
+        var symbols =
+            (await _symbolService.GetLogos(dates,
+                dbUser?.Permissions?.Select(p => p.Name).ToList() ?? new List<string>()))
             .SelectMany(s => s.Dates)
             .ToDictionary(d => d.Date, d => d);
 
@@ -126,11 +134,6 @@ public class LoginService
             Dates = datoer
         };
 
-        // Load the user from the database
-        var dbUser = await _dbContext.Users
-            .Include(u => u.Datoer)
-            .Include(u => u.Permissions)
-            .FirstOrDefaultAsync(u => u.ProfileId == user.Id);
         if (dbUser is null || dbUser.ShouldUpdate()) dbUser = await _userService.UpsertUser(scrapedUser, dbUser);
 
         // Update comments
@@ -192,22 +195,33 @@ public class LoginService
             };
         }
 
+        var success = true;
         switch (code)
         {
             case Role.BeerPong:
-                await AddRoleToUser(user.Profile!.ProfileId, code);
-                _authCache.Remove(user.Token!);
-                return new StatusResponse
-                {
-                    Success = true,
-                    Message = "Koden er blevet indløst"
-                };
+                success = true;
+                break;
+            default:
+                var logo = await _dbContext.LogosDates.Where(l => l.Permission == code).FirstOrDefaultAsync();
+                if (logo is not null) success = true;
+                break;
         }
 
+        if (!success)
+        {
+            return new StatusResponse
+            {
+                Success = false,
+                Message = "Ugyldig kode"
+            };
+        }
+
+        await AddRoleToUser(user.Profile!.ProfileId, code);
+        _authCache.Remove(user.Token!);
         return new StatusResponse
         {
-            Success = false,
-            Message = "Ugyldig kode"
+            Success = true,
+            Message = "Koden er blevet indløst"
         };
     }
 

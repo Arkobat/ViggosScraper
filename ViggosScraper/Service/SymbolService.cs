@@ -12,10 +12,10 @@ public class SymbolService
         _dbContext = dbContext;
     }
 
-    public async Task<List<DbLogoGroup>> GetLogos(List<DateOnly> dates)
+    public async Task<List<DbLogoGroup>> GetLogos(List<DateOnly> dates, List<string> permissions)
     {
         var result = await _dbContext.LogosDates
-            .Where(l => dates.Contains(l.Date))
+            .Where(l => (dates.Contains(l.Date) && l.Permission == null) || permissions.Contains(l.Permission!))
             .Include(d => d.Group)
             .ToListAsync();
 
@@ -48,6 +48,7 @@ public class SymbolService
             new() {Symbol = "Sol",  Dates = new List<DbLogo>() {
                 new() {Description = "Morgendato", Date = new DateOnly(2019, 07, 13)},
                 new() {Description = "Morgendato", Date = new DateOnly(2023, 07, 15)},
+                new() {Description = "FC Campus Morgendato", Date = new DateOnly(2023, 02, 04), Permission = "fccampus-040223"},
             }},
             new() {Symbol = "Flag",  Dates = new List<DbLogo>() {
                 new() {Description = "Viggos Fødselsdag", Date = new DateOnly(2019, 03, 27)},
@@ -106,7 +107,12 @@ public class SymbolService
             
             // Private dates, which are only for users attending a specific event
             new() {Symbol = "Fodbold",  Dates = new List<DbLogo>() {
-                new() {Description = "Fodbold", Date = new DateOnly(2023, 02, 04), Private = true},
+                new() {Description = "Fodbold", Date = new DateOnly(2023, 02, 04), Permission = "fccampus-040223"},
+            }},
+            
+            // Private dates, which are only for users attending a specific event
+            new() {Symbol = "KJ",  Dates = new List<DbLogo>() {
+                new() {Description = "Kristian 27 år", Date = new DateOnly(2024, 1, 25), Permission = "kj-250124"},
             }},
         }; 
         // @formatter:on
