@@ -48,7 +48,7 @@ public class SymbolService
             new() {Symbol = "Sol",  Dates = new List<DbLogo>() {
                 new() {Description = "Morgendato", Date = new DateOnly(2019, 07, 13)},
                 new() {Description = "Morgendato", Date = new DateOnly(2023, 07, 15)},
-                new() {Description = "FC Campus Morgendato", Date = new DateOnly(2023, 02, 04), Permission = "fccampus-040223"},
+                new() {Description = "FC Campus Morgendato", Date = new DateOnly(2023, 02, 04), Permission = "fccampus-181123"},
             }},
             new() {Symbol = "Flag",  Dates = new List<DbLogo>() {
                 new() {Description = "Viggos Fødselsdag", Date = new DateOnly(2019, 03, 27)},
@@ -59,12 +59,14 @@ public class SymbolService
                 new() {Description = "Skt. Patricks Dag", Date = new DateOnly(2019, 03, 17)},
                 new() {Description = "Skt. Patricks Dag", Date = new DateOnly(2022, 03, 17)},
                 new() {Description = "Skt. Patricks Dag", Date = new DateOnly(2023, 03, 17)},
+                new() {Description = "Skt. Patricks Dag", Date = new DateOnly(2024, 03, 17)},
             }},
             new() {Symbol = "Hjerte", Dates = new List<DbLogo>() {
                 new() {Description = "Valentine", Date = new DateOnly(2019, 02, 14)},
                 new() {Description = "Valentine", Date = new DateOnly(2020, 02, 14)},
                 new() {Description = "Valentine", Date = new DateOnly(2022, 02, 14)},
                 new() {Description = "Valentine", Date = new DateOnly(2023, 02, 14)},
+                new() {Description = "Valentine", Date = new DateOnly(2024, 02, 14)},
             }},
             new() {Symbol = "Adventslys", Dates = new List<DbLogo>() {
                 new() {Description = "Advent #1", Date = new DateOnly(2019, 12, 01)},
@@ -103,6 +105,7 @@ public class SymbolService
             }},
             new() {Symbol = "Stjerneskud",  Dates = new List<DbLogo>() {
                 new() {Description = "Skudår", Date = new DateOnly(2020, 02, 29)},
+                new() {Description = "Skudår", Date = new DateOnly(2024, 02, 29)},
             }},
             
             // Private dates, which are only for users attending a specific event
@@ -113,6 +116,11 @@ public class SymbolService
             // Private dates, which are only for users attending a specific event
             new() {Symbol = "KJ",  Dates = new List<DbLogo>() {
                 new() {Description = "Kristian 27 år", Date = new DateOnly(2024, 1, 25), Permission = "kj-250124"},
+            }},
+            new() {Symbol = "Dollar",  Dates = new List<DbLogo>() {
+                new() {Description = "Sparekassen", Date = new DateOnly(2019, 11, 16), Permission = "sparekassen-161119"},
+                new() {Description = "Sparekassen", Date = new DateOnly(2021, 06, 05), Permission = "sparekassen-050621"},
+                new() {Description = "Sparekassen", Date = new DateOnly(2022, 11, 16), Permission = "sparekassen-161122"},
             }},
         }; 
         // @formatter:on
