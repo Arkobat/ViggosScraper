@@ -72,7 +72,7 @@ public class BeerPongService
         var ordered = users.Select(u => new
         {
             User = u,
-            Points = u.Battles.Count(b => b.Won) - u.Battles.Count(b => !b.Won)
+            Points = (u.Battles.Count(b => b.Won) - u.Battles.Count(b => !b.Won)) + (u.Battles.Count / 10)
         }).OrderByDescending(u => u.Points);
 
         var index = 1;
