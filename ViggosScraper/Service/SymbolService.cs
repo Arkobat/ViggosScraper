@@ -87,6 +87,10 @@ public class SymbolService
                 new() {Description = "Advent #2", Date = new DateOnly(2023, 12, 10)},
                 new() {Description = "Advent #3", Date = new DateOnly(2023, 12, 17)},
                 new() {Description = "Advent #4", Date = new DateOnly(2023, 12, 24)},
+                new() {Description = "Advent #1", Date = new DateOnly(2024, 11, 01)},
+                new() {Description = "Advent #2", Date = new DateOnly(2024, 12, 08)},
+                new() {Description = "Advent #3", Date = new DateOnly(2024, 12, 15)},
+                new() {Description = "Advent #4", Date = new DateOnly(2024, 12, 22)},
             }},
             new() {Symbol = "2",  Dates = new List<DbLogo>() {
                 new() {Description = "2 Tals Dato", Date = new DateOnly(2022, 02, 22)},
@@ -119,7 +123,7 @@ public class SymbolService
             }},
             new() {Symbol = "Dollar",  Dates = new List<DbLogo>() {
                 new() {Description = "Sparekassen", Date = new DateOnly(2019, 11, 16), Permission = "sparekassen-161119"},
-                new() {Description = "Sparekassen", Date = new DateOnly(2021, 06, 05), Permission = "sparekassen-050621"},
+                new() {Description = "Sparekassen", Date = new DateOnly(2021, 11, 27), Permission = "sparekassen-271121"},
                 new() {Description = "Sparekassen", Date = new DateOnly(2022, 11, 16), Permission = "sparekassen-161122"},
             }},
         }; 
