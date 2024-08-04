@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using ViggosScraper.Database;
 using ViggosScraper.Middleware;
@@ -16,10 +17,11 @@ public class LoginService
     private readonly ViggosDb _dbContext;
     private readonly HttpSession _httpSession;
     private readonly ICache<string, AuthResponse> _authCache;
+    private readonly ICache<string, LoginResponse> _loginCache;
     private readonly ILogger<LoginService> _logger;
 
     public LoginService(HttpClient httpClient, SymbolService symbolService, UserService userService, ViggosDb dbContext,
-        HttpSession httpSession, ICache<string, AuthResponse> authCache, ILogger<LoginService> logger)
+        HttpSession httpSession, ICache<string, AuthResponse> authCache, ILogger<LoginService> logger, ICache<string, LoginResponse> loginCache)
     {
         _httpClient = httpClient;
         _symbolService = symbolService;
@@ -28,6 +30,7 @@ public class LoginService
         _httpSession = httpSession;
         _authCache = authCache;
         _logger = logger;
+        _loginCache = loginCache;
     }
 
     public async Task<LoginResponse> Login(string phoneNumber, string password)
@@ -49,11 +52,23 @@ public class LoginService
             PropertyNameCaseInsensitive = true
         })!;
 
-        return await ConvertResponse(res);
+        var loginResult = await ConvertResponse(res);
+
+        if (loginResult.Success)
+        {
+            _loginCache.Set(loginResult.Token!, loginResult, TimeSpan.FromDays(3));
+        }
+        
+        return loginResult;
     }
 
     public async Task<LoginResponse> Authenticate(string token)
     {
+        if (_loginCache.TryGet(token, out var cached) && (cached?.Success ?? false))
+        {
+            return cached;
+        }
+        
         var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
         var url = $"https://www.drikdato.app/_service/service.php?ts={now}";
 
@@ -70,7 +85,14 @@ public class LoginService
             PropertyNameCaseInsensitive = true
         })!;
 
-        return await ConvertResponse(res);
+        var loginResult = await ConvertResponse(res);
+
+        if (loginResult.Success)
+        {
+            _loginCache.Set(loginResult.Token!, loginResult, TimeSpan.FromDays(3));
+        }
+        
+        return loginResult;
     }
 
     private async Task<LoginResponse> ConvertResponse(ViggoLoginResponse response)
@@ -195,7 +217,7 @@ public class LoginService
             };
         }
 
-        var success = true;
+        var success = false;
         switch (code)
         {
             case Role.BeerPong:
@@ -217,6 +239,7 @@ public class LoginService
         }
 
         await AddRoleToUser(user.Profile!.ProfileId, code);
+        _loginCache.Remove(user.Token!);
         _authCache.Remove(user.Token!);
         return new StatusResponse
         {

@@ -133,6 +133,12 @@ public class SymbolService
             new() {Symbol = "SIF",  Dates = new List<DbLogo> {
                 new() {Description = "SIF Fraktalet", Date = new DateOnly(2024, 6, 8), Permission = "sif-080624"},
             }},
+            new() {Symbol = "Leo",  Dates = new List<DbLogo> {
+                new() {Description = "Leo", Date = new DateOnly(2024, 7, 27), Permission = "leo-260724"},
+            }},
+            new() {Symbol = "Nico",  Dates = new List<DbLogo> {
+                new() {Description = "Nicholas", Date = new DateOnly(2024, 8, 2), Permission = "nicholas-020824"},
+            }},
         }; 
         // @formatter:on
         await _dbContext.LogoGroups.AddRangeAsync(defaultData);
