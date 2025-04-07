@@ -18,7 +18,7 @@ public class SymbolService
             .Where(l => (dates.Contains(l.Date) && l.Permission == null) || permissions.Contains(l.Permission!))
             .Include(d => d.Group)
             .ToListAsync();
-
+        
         return result
             .Select(r => r.Group)
             .DistinctBy(l => l.Symbol)
@@ -73,6 +73,7 @@ public class SymbolService
                 new() {Description = "Valentine", Date = new DateOnly(2022, 02, 14)},
                 new() {Description = "Valentine", Date = new DateOnly(2023, 02, 14)},
                 new() {Description = "Valentine", Date = new DateOnly(2024, 02, 14)},
+                new() {Description = "Valentine", Date = new DateOnly(2025, 02, 14)},
             }},
             new() {Symbol = "Adventslys", Dates = new List<DbLogo> {
                 new() {Description = "Advent #1", Date = new DateOnly(2019, 12, 01)},
@@ -112,10 +113,14 @@ public class SymbolService
             new() {Symbol = "Krus",  Dates = new List<DbLogo> {
                 new() {Description = "Øllets Dag", Date = new DateOnly(2019, 09, 07)},
                 new() {Description = "Øllets Dag", Date = new DateOnly(2020, 09, 05)},
+                new() {Description = "Oktoberfest", Date = new DateOnly(2024, 11, 26)},
             }},
             new() {Symbol = "Stjerneskud",  Dates = new List<DbLogo> {
                 new() {Description = "Skudår", Date = new DateOnly(2020, 02, 29)},
                 new() {Description = "Skudår", Date = new DateOnly(2024, 02, 29)},
+            }},
+            new() {Symbol = "Node",  Dates = new List<DbLogo> {
+                new() {Description = "Fællessang", Date = new DateOnly(2025, 02, 11)},
             }},
             
             // Private dates, which are only for users attending a specific event
@@ -132,12 +137,20 @@ public class SymbolService
             }},
             new() {Symbol = "SIF",  Dates = new List<DbLogo> {
                 new() {Description = "SIF Fraktalet", Date = new DateOnly(2024, 6, 8), Permission = "sif-080624"},
+                new() {Description = "SIF Fraktalet", Date = new DateOnly(2024, 11, 9), Permission = "sif-091124"},
+            }},
+            new() {Symbol = "Enigma",  Dates = new List<DbLogo> {
+                new() {Description = "Enigma", Date = new DateOnly(2024, 6, 8), Permission = "enigma-161124"},
             }},
             new() {Symbol = "Leo",  Dates = new List<DbLogo> {
                 new() {Description = "Leo", Date = new DateOnly(2024, 7, 27), Permission = "leo-260724"},
             }},
             new() {Symbol = "Nico",  Dates = new List<DbLogo> {
                 new() {Description = "Nicholas", Date = new DateOnly(2024, 8, 2), Permission = "nicholas-020824"},
+            }},
+            new() {Symbol = "E",  Dates = new List<DbLogo> {
+                new() {Description = "Emilie", Date = new DateOnly(2023, 10, 19), Permission = "emilie-191023"},
+                new() {Description = "Emilie", Date = new DateOnly(2024, 10, 19), Permission = "emilie-191024"},
             }},
         }; 
         // @formatter:on
