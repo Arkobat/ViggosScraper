@@ -9,18 +9,18 @@ using ViggosScraper.Database;
 
 #nullable disable
 
-namespace ViggosScraper.Database.Migrations
+namespace ViggosScraper.Migrations
 {
     [DbContext(typeof(ViggosDb))]
-    [Migration("20231105202928_PrivateDato")]
-    partial class PrivateDato
+    [Migration("20250919125259_ChangeDateTimesToDateTime")]
+    partial class ChangeDateTimesToDateTime
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "7.0.1")
+                .HasAnnotation("ProductVersion", "9.0.7")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -36,11 +36,14 @@ namespace ViggosScraper.Database.Migrations
                     b.Property<string>("Comment")
                         .HasColumnType("text");
 
-                    b.Property<DateOnly>("Date")
-                        .HasColumnType("date");
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("Number")
                         .HasColumnType("integer");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("UserId")
                         .HasColumnType("integer");
@@ -70,8 +73,9 @@ namespace ViggosScraper.Database.Migrations
                     b.Property<int>("GroupId")
                         .HasColumnType("integer");
 
-                    b.Property<bool>("Private")
-                        .HasColumnType("boolean");
+                    b.Property<string>("Permission")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.HasKey("Id");
 
@@ -114,6 +118,9 @@ namespace ViggosScraper.Database.Migrations
                     b.Property<string>("Glass")
                         .HasColumnType("text");
 
+                    b.Property<DateTimeOffset?>("LastChecked")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTimeOffset>("LastUpdated")
                         .HasColumnType("timestamp with time zone");
 
@@ -121,9 +128,14 @@ namespace ViggosScraper.Database.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("ProfileId")
-                        .IsRequired()
+                    b.Property<int>("ProfileId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RealName")
                         .HasColumnType("text");
+
+                    b.Property<int>("TotalDatoer")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -131,6 +143,28 @@ namespace ViggosScraper.Database.Migrations
                         .IsUnique();
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("ViggosScraper.Database.Permission", b =>
+                {
+                    b.Property<int>("PermissionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("PermissionId"));
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("PermissionId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Permission");
                 });
 
             modelBuilder.Entity("ViggosScraper.Database.DbDato", b =>
@@ -155,6 +189,17 @@ namespace ViggosScraper.Database.Migrations
                     b.Navigation("Group");
                 });
 
+            modelBuilder.Entity("ViggosScraper.Database.Permission", b =>
+                {
+                    b.HasOne("ViggosScraper.Database.DbUser", "User")
+                        .WithMany("Permissions")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("ViggosScraper.Database.DbLogoGroup", b =>
                 {
                     b.Navigation("Dates");
@@ -163,6 +208,8 @@ namespace ViggosScraper.Database.Migrations
             modelBuilder.Entity("ViggosScraper.Database.DbUser", b =>
                 {
                     b.Navigation("Datoer");
+
+                    b.Navigation("Permissions");
                 });
 #pragma warning restore 612, 618
         }

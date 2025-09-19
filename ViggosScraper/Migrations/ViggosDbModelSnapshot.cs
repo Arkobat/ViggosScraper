@@ -2,73 +2,25 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using ViggosScraper.Database;
 
 #nullable disable
 
-namespace ViggosScraper.Database.Migrations
+namespace ViggosScraper.Migrations
 {
     [DbContext(typeof(ViggosDb))]
-    [Migration("20240105165824_AddBeerPong")]
-    partial class AddBeerPong
+    partial class ViggosDbModelSnapshot : ModelSnapshot
     {
-        /// <inheritdoc />
-        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "7.0.1")
+                .HasAnnotation("ProductVersion", "9.0.7")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
-
-            modelBuilder.Entity("ViggosScraper.Database.BattleResult", b =>
-                {
-                    b.Property<int>("ResultId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("ResultId"));
-
-                    b.Property<int>("BattleId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("integer");
-
-                    b.Property<bool>("Won")
-                        .HasColumnType("boolean");
-
-                    b.HasKey("ResultId");
-
-                    b.HasIndex("BattleId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("BattleResults");
-                });
-
-            modelBuilder.Entity("ViggosScraper.Database.BeerPongBattle", b =>
-                {
-                    b.Property<int>("BattleId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("BattleId"));
-
-                    b.Property<bool>("Confirmed")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTimeOffset>("Time")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("BattleId");
-
-                    b.ToTable("BeerPongBattles");
-                });
 
             modelBuilder.Entity("ViggosScraper.Database.DbDato", b =>
                 {
@@ -84,8 +36,14 @@ namespace ViggosScraper.Database.Migrations
                     b.Property<DateOnly>("Date")
                         .HasColumnType("date");
 
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<int>("Number")
                         .HasColumnType("integer");
+
+                    b.Property<DateTime?>("StartDate")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("UserId")
                         .HasColumnType("integer");
@@ -115,8 +73,9 @@ namespace ViggosScraper.Database.Migrations
                     b.Property<int>("GroupId")
                         .HasColumnType("integer");
 
-                    b.Property<bool>("Private")
-                        .HasColumnType("boolean");
+                    b.Property<string>("Permission")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.HasKey("Id");
 
@@ -159,6 +118,9 @@ namespace ViggosScraper.Database.Migrations
                     b.Property<string>("Glass")
                         .HasColumnType("text");
 
+                    b.Property<DateTimeOffset?>("LastChecked")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTimeOffset>("LastUpdated")
                         .HasColumnType("timestamp with time zone");
 
@@ -166,9 +128,17 @@ namespace ViggosScraper.Database.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("ProfileId")
-                        .IsRequired()
+                    b.Property<string>("Phone")
                         .HasColumnType("text");
+
+                    b.Property<int>("ProfileId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RealName")
+                        .HasColumnType("text");
+
+                    b.Property<int>("TotalDatoer")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -198,25 +168,6 @@ namespace ViggosScraper.Database.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("Permission");
-                });
-
-            modelBuilder.Entity("ViggosScraper.Database.BattleResult", b =>
-                {
-                    b.HasOne("ViggosScraper.Database.BeerPongBattle", "Battle")
-                        .WithMany("Results")
-                        .HasForeignKey("BattleId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("ViggosScraper.Database.DbUser", "User")
-                        .WithMany("Battles")
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Battle");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("ViggosScraper.Database.DbDato", b =>
@@ -252,11 +203,6 @@ namespace ViggosScraper.Database.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("ViggosScraper.Database.BeerPongBattle", b =>
-                {
-                    b.Navigation("Results");
-                });
-
             modelBuilder.Entity("ViggosScraper.Database.DbLogoGroup", b =>
                 {
                     b.Navigation("Dates");
@@ -264,8 +210,6 @@ namespace ViggosScraper.Database.Migrations
 
             modelBuilder.Entity("ViggosScraper.Database.DbUser", b =>
                 {
-                    b.Navigation("Battles");
-
                     b.Navigation("Datoer");
 
                     b.Navigation("Permissions");

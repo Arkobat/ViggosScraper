@@ -4,14 +4,14 @@ namespace ViggosScraper.Model.Response;
 
 public class Dato
 {
-    public int Number { get; set; }
-    public DateOnly Date { get; set; }
+    public required int Number { get; set; }
+    public required DateOnly Date { get; set; }
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public SimpleDatoSymbol? Symbol { get; set; }
+    public required SimpleDatoSymbol? Symbol { get; set; }
     
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public DateTimeOffset? Start { get; set; }
+    public required DateTimeOffset? Start { get; set; }
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public DateTimeOffset? Finish { get; set; }
+    public required DateTimeOffset? Finish { get; set; }
 }

@@ -1,7 +1,6 @@
 ﻿using System.Text.Json.Serialization;
-using ViggosScraper.Model.Response;
 
-namespace ViggosScraper.Model;
+namespace ViggosScraper.Model.Response;
 
 public class UserDto
 {

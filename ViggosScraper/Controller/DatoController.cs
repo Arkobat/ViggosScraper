@@ -1,43 +1,65 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using ViggosScraper.Model;
+﻿using DrikDatoApp.Service;
+using Microsoft.AspNetCore.Mvc;
+using ViggosScraper.Model.Exception;
 using ViggosScraper.Model.Response;
 using ViggosScraper.Service;
 
 namespace ViggosScraper.Controller;
 
-public class DatoController : ControllerBase
+public class DatoController(
+    IDrikDatoService drikDatoService,
+    NewUserService userService,
+    UserScraper userScraper
+) : ControllerBase
 {
-    private readonly UserService _userService;
-    private readonly UserScraper _userScraper;
-    private readonly SearchScraper _searchScraper;
-    private readonly HighscoreScraper _highscoreScraper;
-
-    public DatoController(UserScraper userScraper, SearchScraper searchScraper, HighscoreScraper highscoreScraper,
-        UserService userService)
-    {
-        _userScraper = userScraper;
-        _searchScraper = searchScraper;
-        _highscoreScraper = highscoreScraper;
-        _userService = userService;
-    }
-
     [HttpGet("search/{searchTerm}")]
     public async Task<List<SearchResult>> SearchUser(string searchTerm)
     {
-        return await _searchScraper.Search(searchTerm);
+        var viggosSearch = await drikDatoService.Search(searchTerm);
+        var dbSearch = await userService.SearchUsers(searchTerm);
+
+        return viggosSearch.Results.Select(r => new SearchResult
+                {
+                    Name = r.Alias,
+                    ProfileId = r.Id
+                }
+            )
+            .Concat(dbSearch)
+            .DistinctBy(d => d.ProfileId)
+            .ToList();
     }
 
-    [HttpGet("profile/{profileId}")]
-    public async Task<UserDto> GetUser(string profileId)
+    [HttpGet("profile/{profileId:int}")]
+    public async Task<UserDto> GetUser(int profileId)
     {
-        var dbUser = await _userService.GetUser(profileId);
-        var userDto = await _userScraper.GetUser(dbUser, profileId);
-        return userDto;
+        var user = await userScraper.ScrapeUser(profileId);
+        if (user is null)
+        {
+            throw new NotFoundException($"User with ID {profileId} not found.");
+        }
+
+        return new UserDto
+        {
+            ProfileId = user.ProfileId.ToString(),
+            Name = user.Name,
+            AvatarUrl = user.AvatarUrl,
+            Krus = user.Glass,
+            Dates = user.Datoer.Select(d => new Dato
+            {
+                Number = d.Number,
+                Date = d.Date,
+                Symbol = null,
+                Start = d.EndDate is null ? null : d.StartDate,
+                Finish = d.EndDate
+            }).ToList(),
+        };
     }
 
     [HttpGet("highscore")]
     public async Task<List<HighscoreEntry>> GetHighscore([FromQuery] int? year)
     {
-        return await _highscoreScraper.GetHighscore(year);
+        var highscore = await userService.Highscore(year);
+
+        return highscore;
     }
 }

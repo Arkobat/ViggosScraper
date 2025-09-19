@@ -1,57 +1,94 @@
-﻿using System.Net;
+﻿using DrikDatoApp.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using ViggosScraper.Model;
 using ViggosScraper.Model.Request;
 using ViggosScraper.Model.Response;
 using ViggosScraper.Service;
 
 namespace ViggosScraper.Controller;
 
-public class LoginController : ControllerBase
+public class LoginController(
+    IDrikDatoService drikDatoService,
+    LoginService loginService
+) : ControllerBase
 {
-    private readonly LoginService _loginService;
-
-    public LoginController(LoginService loginService)
-    {
-        _loginService = loginService;
-    }
-
     [HttpPost("login")]
     public async Task<LoginResponse> Login([FromBody] LoginRequest request)
     {
-        var result = await _loginService.Login(request.Username, request.Password);
-        if (!result.Success) Response.StatusCode = (int) HttpStatusCode.Unauthorized;
-        return result;
+        var result = await loginService.Login(request.Username, request.Password);
+        return new LoginResponse
+        {
+            Token = result.SelfUser.Token,
+            Profile = new UserDto
+            {
+                ProfileId = result.User.ProfileId.ToString(),
+                Name = result.User.Name,
+                AvatarUrl = result.User.AvatarUrl,
+                Krus = result.User.Glass,
+                Dates = result.User.Datoer.Select(d => new Dato
+                {
+                    Number = d.Number,
+                    Date = d.Date,
+                    Symbol = null,
+                    Start = d.StartDate,
+                    Finish = d.EndDate
+                }).ToList(),
+            },
+            Permissions = result.User.Permissions.Count == 0
+                ? null
+                : result.User.Permissions.Select(p => p.Name).ToList(),
+            Success = true,
+            Message = string.Empty,
+        };
     }
 
     [HttpPost("authenticate")]
     public async Task<LoginResponse> Authenticate([FromBody] AuthRequest request)
     {
-        var result = await _loginService.Authenticate(request.Token);
-        if (!result.Success) Response.StatusCode = (int) HttpStatusCode.Unauthorized;
+        var result = await loginService.ValidateToken(request.Token);
 
-        return result;
+        return new LoginResponse
+        {
+            Token = result.SelfUser.Token,
+            Profile = new UserDto
+            {
+                ProfileId = result.User.ProfileId.ToString(),
+                Name = result.User.Name,
+                AvatarUrl = result.User.AvatarUrl,
+                Krus = result.User.Glass,
+                Dates = result.User.Datoer.Select(d => new Dato
+                {
+                    Number = d.Number,
+                    Date = d.Date,
+                    Symbol = null,
+                    Start = d.StartDate,
+                    Finish = d.EndDate
+                }).ToList(),
+            },
+            Permissions = result.User.Permissions.Select(p => p.Name).ToList(),
+            Success = true,
+            Message = string.Empty,
+        };
     }
 
     [HttpPost("reset-password")]
     public async Task ResetPassword([FromBody] ResetPasswordRequest request)
     {
-        await _loginService.ResetPassword(request.PhoneNumber);
+        await drikDatoService.ResetPassword(request.PhoneNumber);
     }
 
     [Authorize]
     [HttpPost("verify-secret")]
-    public async Task<StatusResponse> VerifySecret([FromBody] CodeRequest request)
+    public Task<StatusResponse> VerifySecret([FromBody] CodeRequest request)
     {
-        return await _loginService.VerifySecret(request);
+        throw new NotImplementedException();
     }
 
     [Authorize]
     [HttpPost("avatar")]
     [RequestSizeLimit(10_000_000)] // 10 MB
-    public async Task<StatusResponse> SetAvatar(IFormFile file)
+    public Task<StatusResponse> SetAvatar(IFormFile file)
     {
-        return await _loginService.SetAvatar(file);
+        throw new NotImplementedException();
     }
 }
