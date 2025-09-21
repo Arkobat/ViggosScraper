@@ -6,9 +6,6 @@ RUN dotnet restore "ViggosScraper.csproj"
 RUN dotnet build "ViggosScraper.csproj" -c Release -o /app/build
 RUN dotnet publish "ViggosScraper.csproj" -c Release -o /app/publish
 
-#generate the cert, define the path to store it and password to use
-RUN dotnet dev-certs https -ep /https/aspnetapp.pfx -p passw0rd
-
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS deploy
 WORKDIR /app
 COPY --from=build /https/* /https/
