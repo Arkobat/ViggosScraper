@@ -1,21 +1,30 @@
-﻿using DrikDatoApp.Service;
+﻿using DrikDatoApp.Model;
+using DrikDatoApp.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ViggosScraper.Model.Request;
 using ViggosScraper.Model.Response;
 using ViggosScraper.Service;
+using UserDto = ViggosScraper.Model.Response.UserDto;
 
 namespace ViggosScraper.Controller;
 
 public class LoginController(
     IDrikDatoService drikDatoService,
-    LoginService loginService
+    LoginService loginService,
+    SymbolService symbolService
 ) : ControllerBase
 {
     [HttpPost("login")]
     public async Task<LoginResponse> Login([FromBody] LoginRequest request)
     {
         var result = await loginService.Login(request.Username, request.Password);
+        
+        var symbols = await symbolService.GetLogos(
+            result.User.Datoer.Select(d => d.Date).ToList(),
+            result.User.Permissions.Select(p => p.Name).ToList()
+        );
+        
         return new LoginResponse
         {
             Token = result.SelfUser.Token,
@@ -29,7 +38,7 @@ public class LoginController(
                 {
                     Number = d.Number,
                     Date = d.Date,
-                    Symbol = null,
+                    Symbol = SymbolService.GetSymbol(symbols, d.Date),
                     Start = d.StartDate,
                     Finish = d.EndDate
                 }).ToList(),
@@ -47,6 +56,11 @@ public class LoginController(
     {
         var result = await loginService.ValidateToken(request.Token);
 
+        var symbols = await symbolService.GetLogos(
+            result.User.Datoer.Select(d => d.Date).ToList(),
+            result.User.Permissions.Select(p => p.Name).ToList()
+        );
+        
         return new LoginResponse
         {
             Token = result.SelfUser.Token,
@@ -60,7 +74,7 @@ public class LoginController(
                 {
                     Number = d.Number,
                     Date = d.Date,
-                    Symbol = null,
+                    Symbol = SymbolService.GetSymbol(symbols, d.Date),
                     Start = d.StartDate,
                     Finish = d.EndDate
                 }).ToList(),
@@ -87,8 +101,21 @@ public class LoginController(
     [Authorize]
     [HttpPost("avatar")]
     [RequestSizeLimit(10_000_000)] // 10 MB
-    public Task<StatusResponse> SetAvatar(IFormFile file)
+    public async Task<AvatarChangeResponse> SetAvatar(IFormFile file)
     {
-        throw new NotImplementedException();
+        var token = Request.Headers.Authorization.FirstOrDefault();
+        if (string.IsNullOrEmpty(token))
+        {
+            throw new UnauthorizedAccessException("Missing authorization token.");
+        }
+        
+        var user = await Authenticate(new AuthRequest { Token = token });
+        using var memoryStream = new MemoryStream();
+        await file.OpenReadStream().CopyToAsync(memoryStream);
+        var fileId = await drikDatoService.UploadAvatar(user.Profile!.ProfileId, memoryStream);
+        return await drikDatoService.SetAvatar(user.Profile!.ProfileId, fileId, user.Token!);
     }
+    
+    
+    
 }

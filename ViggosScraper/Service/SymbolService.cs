@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ViggosScraper.Database;
+using ViggosScraper.Model.Response;
 
 namespace ViggosScraper.Service;
 
@@ -66,6 +67,7 @@ public class SymbolService
                 new() {Description = "Skt. Patricks Dag", Date = new DateOnly(2022, 03, 17)},
                 new() {Description = "Skt. Patricks Dag", Date = new DateOnly(2023, 03, 17)},
                 new() {Description = "Skt. Patricks Dag", Date = new DateOnly(2024, 03, 17)},
+                new() {Description = "Skt. Patricks Dag", Date = new DateOnly(2025, 03, 17)},
             }},
             new() {Symbol = "Hjerte", Dates = new List<DbLogo> {
                 new() {Description = "Valentine", Date = new DateOnly(2019, 02, 14)},
@@ -98,6 +100,10 @@ public class SymbolService
                 new() {Description = "Advent #2", Date = new DateOnly(2024, 12, 08)},
                 new() {Description = "Advent #3", Date = new DateOnly(2024, 12, 15)},
                 new() {Description = "Advent #4", Date = new DateOnly(2024, 12, 22)},
+                new() {Description = "Advent #1", Date = new DateOnly(2025, 11, 30)},
+                new() {Description = "Advent #2", Date = new DateOnly(2025, 12, 7)},
+                new() {Description = "Advent #3", Date = new DateOnly(2025, 12, 14)},
+                new() {Description = "Advent #4", Date = new DateOnly(2025, 12, 21)},
             }},
             new() {Symbol = "2",  Dates = new List<DbLogo> {
                 new() {Description = "2 Tals Dato", Date = new DateOnly(2022, 02, 22)},
@@ -156,5 +162,21 @@ public class SymbolService
         // @formatter:on
         await _dbContext.LogoGroups.AddRangeAsync(defaultData);
         await _dbContext.SaveChangesAsync();
+    }
+
+    public static SimpleDatoSymbol? GetSymbol(List<DbLogoGroup> symbols, DateOnly date)
+    {
+        var matchingGroup = symbols.FirstOrDefault(s => s.Dates.Any(logo => logo.Date == date));
+        if (matchingGroup == null)
+        {
+            return null;
+        }
+
+        var matchingLogo = matchingGroup.Dates.First(logo => logo.Date == date);
+        return new SimpleDatoSymbol
+        {
+            Symbol = matchingGroup.Symbol,
+            Reason = matchingLogo.Description
+        };
     }
 }

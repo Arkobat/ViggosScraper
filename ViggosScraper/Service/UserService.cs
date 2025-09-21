@@ -4,7 +4,7 @@ using ViggosScraper.Model.Response;
 
 namespace ViggosScraper.Service;
 
-public class NewUserService(ViggosDb dbContext)
+public class UserService(ViggosDb dbContext)
 {
     public async Task<List<HighscoreEntry>> Highscore(int? year = null)
     {

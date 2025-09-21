@@ -23,8 +23,9 @@ var dbConnectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRIN
 
 services
     .AddLogging(l => l.AddConsole())
-    .AddHostedService<BackgroundUserScraper>()
+    .AddDbContext<ViggosDb>(options => options.UseNpgsql(dbConnectionString))
     .AddDrikDatoService()
+    .AddHostedService<BackgroundUserScraper>()
     .AddSingleton(new MemoryCache(new MemoryCacheOptions()))
     .AddScoped(typeof(ICache<,>), typeof(Cache<,>))
     .AddScoped<ExceptionMiddleware>()
@@ -32,9 +33,7 @@ services
     .AddScoped<LoginService>()
     .AddScoped<SymbolService>()
     .AddScoped<UserScraper>()
-    .AddScoped<NewUserService>()
-    .AddDbContext<ViggosDb>(options => options.UseNpgsql(dbConnectionString))
-    ;
+    .AddScoped<UserService>();
 
 services
     .AddOptions()

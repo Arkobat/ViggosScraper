@@ -1,5 +1,6 @@
 ﻿using DrikDatoApp.Service;
 using Microsoft.AspNetCore.Mvc;
+using ViggosScraper.Database;
 using ViggosScraper.Model.Exception;
 using ViggosScraper.Model.Response;
 using ViggosScraper.Service;
@@ -8,8 +9,9 @@ namespace ViggosScraper.Controller;
 
 public class DatoController(
     IDrikDatoService drikDatoService,
-    NewUserService userService,
-    UserScraper userScraper
+    UserService userService,
+    UserScraper userScraper,
+    SymbolService symbolService
 ) : ControllerBase
 {
     [HttpGet("search/{searchTerm}")]
@@ -38,6 +40,11 @@ public class DatoController(
             throw new NotFoundException($"User with ID {profileId} not found.");
         }
 
+        var symbols = await symbolService.GetLogos(
+            user.Datoer.Select(d => d.Date).ToList(),
+            user.Permissions.Select(p => p.Name).ToList()
+        );
+
         return new UserDto
         {
             ProfileId = user.ProfileId.ToString(),
@@ -48,7 +55,7 @@ public class DatoController(
             {
                 Number = d.Number,
                 Date = d.Date,
-                Symbol = null,
+                Symbol = SymbolService.GetSymbol(symbols, d.Date),
                 Start = d.EndDate is null ? null : d.StartDate,
                 Finish = d.EndDate
             }).ToList(),

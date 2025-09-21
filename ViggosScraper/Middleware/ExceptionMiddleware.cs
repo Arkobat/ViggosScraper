@@ -14,7 +14,6 @@ public class ExceptionMiddleware(ILogger<ExceptionMiddleware> logger) : IMiddlew
         }
         catch (HttpException e)
         {
-            logger.LogDebug("Error: {Message}", e.Message);
             await HandleExceptionAsync(context, e.HttpStatus, e.Message);
         }
         catch (NotImplementedException e)
