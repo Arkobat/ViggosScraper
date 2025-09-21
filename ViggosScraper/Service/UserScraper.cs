@@ -53,6 +53,7 @@ public class UserScraper(
 
             var existingUser = await dbContext.Users
                 .Include(u => u.Datoer)
+                .Include(u => u.Permissions)
                 .FirstOrDefaultAsync(u => u.ProfileId == player.Id);
 
             if (existingUser is null)

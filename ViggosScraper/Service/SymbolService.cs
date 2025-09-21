@@ -16,7 +16,7 @@ public class SymbolService
     public async Task<List<DbLogoGroup>> GetLogos(List<DateOnly> dates, List<string> permissions)
     {
         var result = await _dbContext.LogosDates
-            .Where(l => (dates.Contains(l.Date) && l.Permission == null) || permissions.Contains(l.Permission!))
+            .Where(l => (dates.Contains(l.Date) && (l.Permission == null)) || permissions.Contains(l.Permission!))
             .Include(d => d.Group)
             .ToListAsync();
         
@@ -147,13 +147,13 @@ public class SymbolService
                 new() {Description = "SIF Fraktalet", Date = new DateOnly(2024, 11, 9), Permission = "sif-091124"},
             }},
             new() {Symbol = "Enigma",  Dates = new List<DbLogo> {
-                new() {Description = "Enigma", Date = new DateOnly(2024, 6, 8), Permission = "enigma-161124"},
+                new() {Description = "Enigma", Date = new DateOnly(2024, 11, 16), Permission = "enigma-161124"},
             }},
             new() {Symbol = "Leo",  Dates = new List<DbLogo> {
-                new() {Description = "Leo", Date = new DateOnly(2024, 7, 27), Permission = "leo-260724"},
+                new() {Description = "Leo", Date = new DateOnly(2024, 7, 27), Permission = "leo-270724"},
             }},
             new() {Symbol = "Nico",  Dates = new List<DbLogo> {
-                new() {Description = "Nicholas", Date = new DateOnly(2024, 8, 2), Permission = "nicholas-020824"},
+                new() {Description = "Nicholas", Date = new DateOnly(2024, 8, 2), Permission = "nicolas-020824"},
             }},
             new() {Symbol = "E",  Dates = new List<DbLogo> {
                 new() {Description = "Emilie", Date = new DateOnly(2023, 10, 19), Permission = "emilie-191023"},

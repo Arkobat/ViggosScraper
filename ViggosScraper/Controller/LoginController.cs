@@ -1,6 +1,5 @@
 ﻿using DrikDatoApp.Model;
 using DrikDatoApp.Service;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using ViggosScraper.Model.Request;
 using ViggosScraper.Model.Response;
@@ -91,14 +90,12 @@ public class LoginController(
         await drikDatoService.ResetPassword(request.PhoneNumber);
     }
 
-    [Authorize]
     [HttpPost("verify-secret")]
     public Task<StatusResponse> VerifySecret([FromBody] CodeRequest request)
     {
         throw new NotImplementedException();
     }
 
-    [Authorize]
     [HttpPost("avatar")]
     [RequestSizeLimit(10_000_000)] // 10 MB
     public async Task<AvatarChangeResponse> SetAvatar(IFormFile file)
@@ -109,13 +106,10 @@ public class LoginController(
             throw new UnauthorizedAccessException("Missing authorization token.");
         }
         
-        var user = await Authenticate(new AuthRequest { Token = token });
         using var memoryStream = new MemoryStream();
         await file.OpenReadStream().CopyToAsync(memoryStream);
-        var fileId = await drikDatoService.UploadAvatar(user.Profile!.ProfileId, memoryStream);
-        return await drikDatoService.SetAvatar(user.Profile!.ProfileId, fileId, user.Token!);
+        
+        return await loginService.ChangeAvatar(token, memoryStream);
     }
-    
-    
     
 }

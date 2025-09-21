@@ -62,4 +62,25 @@ public class LoginService(
         loginCache.Set(response.Token!, authUser, TimeSpan.FromMinutes(60));
         return authUser;
     }
+
+    public async Task<AvatarChangeResponse> ChangeAvatar(string token, MemoryStream imageStream)
+    {
+        var authUser = await ValidateToken(token);
+        var fileId = await drikDatoService.UploadAvatar(authUser.User.ProfileId.ToString(), imageStream);
+        var success = await drikDatoService.SetAvatar(authUser.User.ProfileId.ToString(), fileId, authUser.SelfUser.Token!);
+        
+        if (success.Success)
+        {
+            var dbUser = await dbContext.Users.FirstOrDefaultAsync(u => u.ProfileId == authUser.User.ProfileId);
+            if (dbUser != null)
+            {
+                dbUser.AvatarUrl = fileId;
+                await dbContext.SaveChangesAsync();
+                authUser.User.AvatarUrl = fileId;
+                authUser.SelfUser.Photo = fileId;
+            }
+        }
+
+        return success;
+    }
 }
