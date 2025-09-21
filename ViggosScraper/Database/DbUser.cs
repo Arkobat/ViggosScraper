@@ -36,7 +36,7 @@ public class DbDato
     public required DateOnly Date { get; set; }
     public required DateTime? StartDate { get; set; }
     public required DateTime? EndDate { get; set; }
-    public required string? Comment { get; set; }
+    public string? Comment { get; set; }
 
     public int UserId { get; set; }
     public DbUser User { get; set; } = null!;

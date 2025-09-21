@@ -131,7 +131,7 @@ public class UserScraper(
                 var dateNumber = player.NumDates;
                 user.Datoer = authorizeResponse.Player.Dates.Select(d => new DbDato
                 {
-                    Number = dateNumber++,
+                    Number = dateNumber--,
                     Date = DateOnly.FromDateTime(DateFormatter.MapViggosDate(d.DateFormatted)),
                     StartDate = DateFormatter.MapViggosDate(d.DateFormatted),
                     EndDate = DateFormatter.MapViggosDate(d.EndDateFormatted),

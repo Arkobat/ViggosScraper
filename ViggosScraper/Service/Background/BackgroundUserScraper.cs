@@ -120,7 +120,7 @@ public class BackgroundUserScraper(
             {
                 // Some found, some not - count consecutive from the end
                 var lastResults = results.OrderBy(r => r.UserId).TakeLast(MaxConsecutiveNotFound).ToList();
-                consecutiveNotFound = lastResults.TakeWhile(r => !r.Found).Count();
+                consecutiveNotFound = lastResults.AsEnumerable().Reverse().TakeWhile(r => !r.Found).Count();
             }
 
             if (totalUsersProcessed % 1000 == 0)
