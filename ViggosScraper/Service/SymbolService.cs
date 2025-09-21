@@ -55,6 +55,7 @@ public class SymbolService
                 new() {Description = "Morgendato", Date = new DateOnly(2019, 07, 13)},
                 new() {Description = "Morgendato", Date = new DateOnly(2023, 07, 15)},
                 new() {Description = "FC Campus Morgendato", Date = new DateOnly(2023, 02, 04), Permission = "fccampus-181123"},
+                new() {Description = "Morgendato", Date = new DateOnly(2024, 09, 07)},
             }},
             new() {Symbol = "Flag",  Dates = new List<DbLogo> {
                 new() {Description = "Viggos Fødselsdag", Date = new DateOnly(2019, 03, 27)},
