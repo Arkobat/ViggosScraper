@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 COPY . ./
 WORKDIR "/src/ViggosScraper/"
@@ -9,7 +9,7 @@ RUN dotnet publish "ViggosScraper.csproj" -c Release -o /app/publish
 #generate the cert, define the path to store it and password to use
 RUN dotnet dev-certs https -ep /https/aspnetapp.pfx -p passw0rd
 
-FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS deploy
+FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS deploy
 WORKDIR /app
 COPY --from=build /https/* /https/
 COPY --from=build /app/publish .
