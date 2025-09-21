@@ -2,28 +2,27 @@
 
 #nullable disable
 
-namespace ViggosScraper.Database.Migrations
+namespace ViggosScraper.Migrations
 {
     /// <inheritdoc />
-    public partial class PrivateDato : Migration
+    public partial class AddsPhone : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<bool>(
-                name: "Private",
-                table: "LogosDates",
-                type: "boolean",
-                nullable: false,
-                defaultValue: false);
+            migrationBuilder.AddColumn<string>(
+                name: "Phone",
+                table: "Users",
+                type: "text",
+                nullable: true);
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropColumn(
-                name: "Private",
-                table: "LogosDates");
+                name: "Phone",
+                table: "Users");
         }
     }
 }

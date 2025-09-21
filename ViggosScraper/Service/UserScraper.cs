@@ -1,137 +1,225 @@
-﻿using HtmlAgilityPack;
+﻿using DrikDatoApp.Model;
+using DrikDatoApp.Service;
+using Microsoft.EntityFrameworkCore;
 using ViggosScraper.Database;
-using ViggosScraper.Extension;
-using ViggosScraper.Model;
-using ViggosScraper.Model.Exception;
-using ViggosScraper.Model.Response;
 
 namespace ViggosScraper.Service;
 
-public class UserScraper
+public class UserScraper(
+    IDrikDatoService drikDatoService,
+    ViggosDb dbContext,
+    ILogger<UserScraper> logger
+)
 {
-    private readonly ILogger<UserScraper> _logger;
-    private readonly SymbolService _symbolService;
-
-    public UserScraper(ILogger<UserScraper> logger, SymbolService symbolService)
+    public async Task<DbUser?> ScrapeUser(int userId)
     {
-        _logger = logger;
-        _symbolService = symbolService;
+        try
+        {
+            logger.LogDebug("Starting scrape for user {UserId}", userId);
+
+            var userResponse = await drikDatoService.GetUser(userId.ToString());
+
+            if (userResponse.Status != 1)
+            {
+                logger.LogInformation("User {UserId} not found", userId);
+                return null;
+            }
+
+            logger.LogDebug("Found user {UserId}: {UserName} ({Alias})",
+                userId, userResponse.Player!.Name, userResponse.Player.Alias);
+
+            var user = await ProcessUser(userResponse.Player);
+            logger.LogInformation("Successfully scraped user {UserId}", userId);
+            return user;
+
+        }
+        catch (HttpRequestException ex)
+        {
+            logger.LogWarning("HTTP error for user {UserId}: {Error}", userId, ex.Message);
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Unexpected error scraping user {UserId}", userId);
+            throw;
+        }
     }
 
-    public async Task<UserDto> GetUser(DbUser? dbUser, string userId)
+    private async Task<DbUser> ProcessUser(UserDto player)
     {
-        _logger.LogInformation("Getting user {userId}", userId);
-
-        var url = $"https://www.drikdato.dk/ViggosOdense/Profil/{userId}";
-
-        var web = new HtmlWeb();
-        var htmlDoc = await web.LoadFromWebAsync(url);
-
-        if (htmlDoc.DocumentNode.InnerText.Contains("Profilen blev ikke fundet..."))
+        try
         {
-            _logger.LogInformation("User {userId} not found", userId);
-            throw new NotFoundException($"Could not find any user with that id {userId}");
+            logger.LogTrace("Processing user {UserId}: {Name} ({Alias})", player.Id, player.Name, player.Alias);
+
+            var existingUser = await dbContext.Users
+                .Include(u => u.Datoer)
+                .FirstOrDefaultAsync(u => u.ProfileId == player.Id);
+
+            if (existingUser is null)
+            {
+                existingUser = await CreateNewUser(player);
+            }
+            else
+            {
+                existingUser.Name = player.Alias;
+                existingUser.RealName = player.Name;
+                existingUser.AvatarUrl = player.Photo;
+                existingUser.Glass = player.GlassNumber;
+                existingUser.LastUpdated = DateTimeOffset.UtcNow;
+                existingUser.LastChecked = DateTimeOffset.UtcNow;
+                await dbContext.SaveChangesAsync();
+            }
+
+            await UpdateUserDates(existingUser, player);
+            await dbContext.SaveChangesAsync();
+
+            logger.LogTrace("Successfully saved user {UserId} to database", player.Id);
+            return existingUser;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to process user {UserId}", player.Id);
+            throw;
+        }
+    }
+
+
+    private async Task<DbUser> CreateNewUser(UserDto player)
+    {
+        if (player.Token is not null)
+        {
+            var authorizeResponse = await drikDatoService.Authorize(player.Token);
+            if (authorizeResponse.Status == 1)
+            {
+                return await CreateUser(authorizeResponse.Player!);
+            }
         }
 
-        var userInfo = htmlDoc.DocumentNode.SelectNodes(
-                "/" +
-                "/div[@class='floatPod']" +
-                "/div[@class='padding']" +
-                "/table" +
-                "/tr" +
-                "/td" +
-                "/div[@class='headline']"
-            )
-            .Select(n => n.InnerText.Trim())
-            .ToArray();
-
-        var avatar = htmlDoc.DocumentNode.SelectNodes(
-            "/" +
-            "/div[@class='floatPod']" +
-            "/div[@class='padding']" +
-            "/table" +
-            "/tr" +
-            "/td" +
-            "/img/@src"
-        ).Single().Attributes["src"].Value;
-
-        if (avatar?.StartsWith("/img/icon") ?? false) avatar = null;
-        var glass = userInfo[1].DigitOnly();
-        if (string.IsNullOrWhiteSpace(glass)) glass = null;
-
-        var user = new UserDto()
+        return new DbUser
         {
-            ProfileId = userId,
-            Name = userInfo[0],
-            RealName = null,
-            AvatarUrl = avatar is null ? null : $"https://www.drikdato.dk{avatar}",
-            Krus = glass,
-            Dates = await GetDates(htmlDoc, dbUser?.Permissions.Select(p => p.Name).ToList() ?? new List<string>())
+            ProfileId = player.Id,
+            Name = player.Alias,
+            RealName = player.Name,
+            AvatarUrl = player.Photo,
+            //AvatarUrl = !string.IsNullOrEmpty(player.Photo) ? $"https://www.drikdato.app/uploads/{player.Photo}" : null,
+            Glass = player.GlassNumber,
+            Phone = player.Phone,
+            TotalDatoer = 0,
+            LastUpdated = DateTimeOffset.UtcNow,
+            Datoer = []
         };
-
-        return user;
     }
 
-    private async Task<List<Dato>> GetDates(HtmlDocument htmlDoc, List<string> permissions)
+    private async Task UpdateUserDates(DbUser user, UserDto player)
     {
-        var nodes = htmlDoc.DocumentNode.SelectNodes(
-            "/" +
-            "/div[@class='floatPod']" +
-            "/div[@class='padding']" +
-            "/div[@class='yearlayer']" +
-            "/table" +
-            "/tr"
-        );
-
-        if (nodes == null)
-            return new List<Dato>();
-
-        var dates = nodes
-            .Where(n => n.InnerText != "Nr.Dato")
-            .Select(n => n.InnerText
-                .Replace("\t", "")
-                .Split("\r\n")
-                .Where(s => !string.IsNullOrWhiteSpace(s))
-                .ToArray())
-            .Select(s => ParseDate(s[1]))
-            .ToList();
-
-        var symbols = await _symbolService.GetLogos(dates, permissions);
-
-        return dates
-            .Order()
-            .Select((date, i) => new Dato
+        if (player.NumDates == user.TotalDatoer)
+        {
+            // No change in the number of dates, nothing to do
+            return;
+        }
+        
+        // Check if we have a valid token to fetch detailed date info
+        if (!string.IsNullOrEmpty(player.Token))
+        {
+            var authorizeResponse = await drikDatoService.Authorize(player.Token);
+            // If token is valid, update dates from detailed info
+            if (authorizeResponse.Status == 1)
             {
-                Number = i + 1,
-                Date = date,
-                Symbol = symbols
-                    .SelectMany(s => s.Dates)
-                    .FirstOrDefault(s => s.Date == date)?.ToDto()
-            }).ToList();
+                user.TotalDatoer = authorizeResponse.Player!.Dates.Count;
+
+                user.Datoer.Clear();
+                var dateNumber = player.NumDates;
+                user.Datoer = authorizeResponse.Player.Dates.Select(d => new DbDato
+                {
+                    Number = dateNumber--,
+                    Date = DateOnly.FromDateTime(DateFormatter.MapViggosDate(d.DateFormatted)),
+                    StartDate = DateFormatter.MapViggosDate(d.DateFormatted),
+                    EndDate = DateFormatter.MapViggosDate(d.EndDateFormatted),
+                    Comment = d.Comment,
+                }).ToList();
+                return;
+            }
+        }
+        
+        // Check if the number of dates has changed since we last checked
+        var now = DateTimeOffset.UtcNow;
+        var yesterday = now.AddDays(-1).Date;
+        var wasCheckedYesterday = user.LastChecked.HasValue &&
+                                  user.LastChecked.Value.Date == yesterday;
+        
+        // If we checked them yesterday, and they have exactly one more date than before, we can infer they got a new date yesterday
+        if (wasCheckedYesterday && player.NumDates == user.TotalDatoer + 1)
+        {
+            user.Datoer.Add(new DbDato
+            {
+                Number = player.NumDates,
+                Date = new DateOnly(yesterday.Year, yesterday.Month, yesterday.Day),
+                StartDate = null,
+                EndDate = null,
+                Comment = null
+            });
+        }
+        
+        // Always update the total date count to match the current number
+        user.TotalDatoer = player.NumDates;
     }
 
-    public static DateOnly ParseDate(string date)
+    public async Task<DbUser> CreateUser(SelfUserDto player)
     {
-        var data = date.Replace(".", "").Split(" ");
-
-        var day = int.Parse(data[0]);
-        var year = int.Parse(data[2]);
-
-        return data[1] switch
+        var dateNumber = player.Dates.Count;
+        var dbUser = new DbUser
         {
-            "januar" => new DateOnly(year, 1, day),
-            "februar" => new DateOnly(year, 2, day),
-            "marts" => new DateOnly(year, 3, day),
-            "april" => new DateOnly(year, 4, day),
-            "maj" => new DateOnly(year, 5, day),
-            "juni" => new DateOnly(year, 6, day),
-            "juli" => new DateOnly(year, 7, day),
-            "august" => new DateOnly(year, 8, day),
-            "september" => new DateOnly(year, 9, day),
-            "oktober" => new DateOnly(year, 10, day),
-            "november" => new DateOnly(year, 11, day),
-            "december" => new DateOnly(year, 12, day),
-            _ => throw new ArgumentOutOfRangeException(nameof(date), date, null)
+            ProfileId = player.Id,
+            Name = player.Alias,
+            RealName = player.Name,
+            AvatarUrl = player.Photo,
+            Glass = player.GlassNumber,
+            Phone = player.Phone,
+            TotalDatoer = player.Dates.Count,
+            Datoer = player.Dates.Select(d => new DbDato
+            {
+                Number = dateNumber--,
+                Date = DateOnly.FromDateTime(DateFormatter.MapViggosDate(d.DateFormatted)),
+                StartDate = DateFormatter.MapViggosDate(d.DateFormatted),
+                EndDate = DateFormatter.MapViggosDate(d.EndDateFormatted),
+                Comment = d.Comment,
+            }).ToList(),
+            Permissions = [],
+            LastUpdated = DateTimeOffset.UtcNow,
+            LastChecked = DateTimeOffset.UtcNow,
         };
+        dbContext.Users.Add(dbUser);
+        await dbContext.SaveChangesAsync();
+
+        return dbUser;
+    }
+
+    public async Task UpdateUser(DbUser user, SelfUserDto player)
+    {
+        user.Name = player.Alias;
+        user.RealName = player.Name;
+        user.AvatarUrl = player.Photo;
+        user.Glass = player.GlassNumber;
+        user.LastUpdated = DateTimeOffset.UtcNow;
+        user.LastChecked = DateTimeOffset.UtcNow;
+
+        if (user.TotalDatoer != player.Dates.Count)
+        {
+            user.TotalDatoer = player.Dates.Count;
+
+            // Clear existing dates and add all from the API to ensure we have the complete set
+            user.Datoer.Clear();
+            var dateNumber = player.Dates.Count;
+            user.Datoer = player.Dates.Select(d => new DbDato
+            {
+                Number = dateNumber--,
+                Date = DateOnly.FromDateTime(DateFormatter.MapViggosDate(d.DateFormatted)),
+                StartDate = DateFormatter.MapViggosDate(d.DateFormatted),
+                EndDate = DateFormatter.MapViggosDate(d.EndDateFormatted),
+                Comment = d.Comment,
+            }).ToList();
+        }
+
+        await dbContext.SaveChangesAsync();
     }
 }

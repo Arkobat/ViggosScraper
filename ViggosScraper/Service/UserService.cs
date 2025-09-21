@@ -1,69 +1,81 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using ViggosScraper.Database;
-using ViggosScraper.Model;
+using ViggosScraper.Model.Response;
 
 namespace ViggosScraper.Service;
 
-public class UserService
+public class UserService(ViggosDb dbContext)
 {
-    private readonly ViggosDb _dbContext;
-    private readonly UserScraper _userScraper;
-    private readonly ILogger<UserService> _logger;
-
-    public UserService(ViggosDb dbContext, UserScraper userScraper, ILogger<UserService> logger)
+    public async Task<List<HighscoreEntry>> Highscore(int? year = null)
     {
-        _dbContext = dbContext;
-        _userScraper = userScraper;
-        _logger = logger;
-    }
+        List<HighscoreEntry> results;
 
-    public async Task<DbUser> GetUser(string userId)
-    {
-        var user = await _dbContext.Users
-            .Include(u => u.Permissions)
-            .FirstOrDefaultAsync(u => u.ProfileId == userId);
-
-        if (user is null || user.ShouldUpdate())
+        if (year.HasValue)
         {
-            _logger.LogInformation("Scraping user {UserId}", userId);
-            var scrapedUser = await _userScraper.GetUser(user, userId);
-            user = await UpsertUser(scrapedUser, user);
-            await _dbContext.SaveChangesAsync();
-        }
-
-        return user;
-    }
-
-    public async Task<DbUser> UpsertUser(UserDto scrapedUser, DbUser? dbUser)
-    {
-        if (dbUser is null)
-        {
-            dbUser = new DbUser()
-            {
-                ProfileId = scrapedUser.ProfileId,
-                Name = scrapedUser.Name,
-                RealName = scrapedUser.RealName,
-                AvatarUrl = scrapedUser.AvatarUrl,
-                Glass = scrapedUser.Krus,
-                LastUpdated = DateTimeOffset.UtcNow,
-                Datoer = scrapedUser.Dates.Select(d => new DbDato()
+            // For a specific year, use actual date data we have
+            results = await dbContext.Users
+                .Select(u => new HighscoreEntry
                 {
-                    Number = d.Number,
-                    Date = d.Date,
-                }).ToList()
-            };
-            await _dbContext.Users.AddAsync(dbUser);
-            await _dbContext.SaveChangesAsync();
-            return dbUser;
+                    ProfileId = u.ProfileId.ToString(),
+                    Name = u.Name,
+                    Position = 0, // Will be calculated below
+                    TotalDates = u.Datoer.Count(d => d.Date.Year == year.Value)
+                })
+                .Where(h => h.TotalDates > 0) // Only include users with dates in that year
+                .OrderByDescending(h => h.TotalDates)
+                .Take(150)
+                .ToListAsync();
+        }
+        else
+        {
+            // For total/all-time, use TotalDatoer property
+            results = await dbContext.Users
+                .Select(u => new HighscoreEntry
+                {
+                    ProfileId = u.ProfileId.ToString(),
+                    Name = u.Name,
+                    Position = 0, // Will be calculated below
+                    TotalDates = u.TotalDatoer
+                })
+                .Where(h => h.TotalDates > 0) // Only include users with dates
+                .OrderByDescending(h => h.TotalDates)
+                .Take(150)
+                .ToListAsync();
         }
 
-        dbUser.Name = scrapedUser.Name;
-        if (scrapedUser.RealName is not null) dbUser.RealName = scrapedUser.RealName;
-        dbUser.AvatarUrl = scrapedUser.AvatarUrl;
-        dbUser.Glass = scrapedUser.Krus;
-        dbUser.LastUpdated = DateTimeOffset.UtcNow;
+        // Calculate positions
+        for (var i = 0; i < results.Count; i++)
+        {
+            results[i].Position = i + 1;
+        }
 
-        await _dbContext.SaveChangesAsync();
-        return dbUser;
+        return results;
+    }
+
+    public async Task<List<SearchResult>> SearchUsers(string searchTerm)
+    {
+        if (string.IsNullOrWhiteSpace(searchTerm))
+        {
+            return [];
+        }
+
+        searchTerm = searchTerm.Trim();
+
+        var users = await dbContext.Users
+            .Where(u =>
+                EF.Functions.ILike(u.Name, $"%{searchTerm}%") ||
+                (u.RealName != null && EF.Functions.ILike(u.RealName, $"%{searchTerm}%")) ||
+                (u.Glass != null && u.Glass == searchTerm) ||
+                (u.Phone != null && u.Phone == searchTerm)
+            )
+            .Select(u => new SearchResult
+            {
+                ProfileId = u.ProfileId.ToString(),
+                Name = u.Name,
+            })
+            .Take(100)
+            .ToListAsync();
+
+        return users;
     }
 }

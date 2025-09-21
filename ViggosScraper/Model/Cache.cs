@@ -1,4 +1,5 @@
 ﻿using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.Caching.Memory;
 
 namespace ViggosScraper.Model;
@@ -10,7 +11,7 @@ public interface ICache<in TId, T>
     public void SetName(string name);
     public bool Contains(TId key, out T? value);
     public Task<T> Get(TId key, Func<Task<T>> supplier, TimeSpan cacheTime);
-    public bool TryGet(TId key, out T? result);
+    public bool TryGet(TId key, [NotNullWhen(true)] out T? result);
     public T Set(TId id, T item, TimeSpan cacheTime);
     public void Remove(TId key);
     public void Destroy();
@@ -61,7 +62,7 @@ internal class Cache<TId, T> : ICache<TId, T> where TId : notnull where T : notn
         }
     }
 
-    public bool TryGet(TId key, out T? result)
+    public bool TryGet(TId key, [NotNullWhen(true)] out T? result)
     {
         return _cache.TryGetValue(GetKey(key), out result);
     }

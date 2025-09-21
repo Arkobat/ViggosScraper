@@ -4,9 +4,9 @@ namespace ViggosScraper.Model.Response;
 
 public class LoginResponse : StatusResponse
 {
-    public string? Token { get; set; }
-    public UserDto? Profile { get; set; }
+    public required string? Token { get; set; }
+    public required UserDto? Profile { get; set; }
 
     [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-    public List<string>? Permissions { get; set; }
+    public required List<string>? Permissions { get; set; }
 }
