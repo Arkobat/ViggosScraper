@@ -8,6 +8,5 @@ RUN dotnet publish "ViggosScraper.csproj" -c Release -o /app/publish
 
 FROM mcr.microsoft.com/dotnet/aspnet:9.0 AS deploy
 WORKDIR /app
-COPY --from=build /https/* /https/
 COPY --from=build /app/publish .
 ENTRYPOINT ["dotnet", "ViggosScraper.dll"]
