@@ -197,10 +197,17 @@ public class SymbolService
             return false;
         }
 
-        return startDate.Value.DayOfWeek switch
+        // Convert UTC time to Danish local time (handles both winter UTC+1 and summer UTC+2)
+        var danishTimeZone = TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time");
+        var localTime = TimeZoneInfo.ConvertTimeFromUtc(startDate.Value, danishTimeZone);
+
+        // Check if time is after 19:55 (accounting for 5-minute offset) or before 06:00
+        var isNightTime = localTime.Hour is >= 20 or < 6 || localTime is { Hour: 19, Minute: >= 55 };
+
+        return localTime.DayOfWeek switch
         {
-            DayOfWeek.Friday => startDate.Value.Hour is >= 20 or < 6,
-            DayOfWeek.Saturday => startDate.Value.Hour is >= 20 or < 6,
+            DayOfWeek.Friday => localTime >= new DateTime(2025, 3, 1) && isNightTime,
+            DayOfWeek.Saturday => localTime >= new DateTime(2024, 10, 1) && isNightTime,
             _ => false
         };
     }
