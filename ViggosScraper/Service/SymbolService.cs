@@ -165,19 +165,43 @@ public class SymbolService
         await _dbContext.SaveChangesAsync();
     }
 
-    public static SimpleDatoSymbol? GetSymbol(List<DbLogoGroup> symbols, DateOnly date)
+    public static SimpleDatoSymbol? GetSymbol(List<DbLogoGroup> symbols, DateOnly date, DateTime? startDate)
     {
         var matchingGroup = symbols.FirstOrDefault(s => s.Dates.Any(logo => logo.Date == date));
-        if (matchingGroup == null)
+        if (matchingGroup is not null)
         {
-            return null;
+            var matchingLogo = matchingGroup.Dates.First(logo => logo.Date == date);
+            return new SimpleDatoSymbol
+            {
+                Symbol = matchingGroup.Symbol,
+                Reason = matchingLogo.Description
+            };
+        }
+        
+        if (IsDatoByNight(startDate))
+        {
+            return new SimpleDatoSymbol
+            {
+                Symbol = "Måne",
+                Reason = "Dato by Night"
+            };
+        }
+        
+        return null;
+    }
+
+    private static bool IsDatoByNight(DateTime? startDate)
+    {
+        if (startDate is null)
+        {
+            return false;
         }
 
-        var matchingLogo = matchingGroup.Dates.First(logo => logo.Date == date);
-        return new SimpleDatoSymbol
+        return startDate.Value.DayOfWeek switch
         {
-            Symbol = matchingGroup.Symbol,
-            Reason = matchingLogo.Description
+            DayOfWeek.Friday => startDate.Value > new DateTime(2025, 3, 1, 20, 0, 0),
+            DayOfWeek.Saturday => startDate.Value > new DateTime(2024, 10, 1, 20, 0, 0),
+            _ => false
         };
     }
 }

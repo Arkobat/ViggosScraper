@@ -37,7 +37,7 @@ public class LoginController(
                 {
                     Number = d.Number,
                     Date = d.Date,
-                    Symbol = SymbolService.GetSymbol(symbols, d.Date),
+                    Symbol = SymbolService.GetSymbol(symbols, d.Date, d.StartDate),
                     Start = d.StartDate,
                     Finish = d.EndDate
                 }).ToList(),
@@ -73,7 +73,7 @@ public class LoginController(
                 {
                     Number = d.Number,
                     Date = d.Date,
-                    Symbol = SymbolService.GetSymbol(symbols, d.Date),
+                    Symbol = SymbolService.GetSymbol(symbols, d.Date, d.StartDate),
                     Start = d.StartDate,
                     Finish = d.EndDate
                 }).ToList(),

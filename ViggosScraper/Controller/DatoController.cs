@@ -55,7 +55,7 @@ public class DatoController(
             {
                 Number = d.Number,
                 Date = d.Date,
-                Symbol = SymbolService.GetSymbol(symbols, d.Date),
+                Symbol = SymbolService.GetSymbol(symbols, d.Date, d.StartDate),
                 Start = d.EndDate is null ? null : d.StartDate,
                 Finish = d.EndDate
             }).ToList(),
