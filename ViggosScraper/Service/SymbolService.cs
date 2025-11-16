@@ -199,8 +199,8 @@ public class SymbolService
 
         return startDate.Value.DayOfWeek switch
         {
-            DayOfWeek.Friday => startDate.Value > new DateTime(2025, 3, 1, 20, 0, 0),
-            DayOfWeek.Saturday => startDate.Value > new DateTime(2024, 10, 1, 20, 0, 0),
+            DayOfWeek.Friday => startDate.Value.Hour is >= 20 or < 6,
+            DayOfWeek.Saturday => startDate.Value.Hour is >= 20 or < 6,
             _ => false
         };
     }
