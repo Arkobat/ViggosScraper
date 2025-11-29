@@ -96,7 +96,7 @@ public class UserScraper(
             }
         }
 
-        return new DbUser
+        var dbUser = new DbUser
         {
             ProfileId = player.Id,
             Name = player.Alias,
@@ -105,10 +105,13 @@ public class UserScraper(
             //AvatarUrl = !string.IsNullOrEmpty(player.Photo) ? $"https://www.drikdato.app/uploads/{player.Photo}" : null,
             Glass = player.GlassNumber,
             Phone = player.Phone,
-            TotalDatoer = 0,
+            TotalDatoer = player.NumDates,
             LastUpdated = DateTimeOffset.UtcNow,
             Datoer = []
         };
+        dbContext.Users.Add(dbUser);
+        await dbContext.SaveChangesAsync();
+        return dbUser;
     }
 
     private async Task UpdateUserDates(DbUser user, UserDto player)
